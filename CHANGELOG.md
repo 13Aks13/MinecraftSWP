@@ -1,3 +1,9 @@
+# [1.12.0](https://github.com/13Aks13/MinecraftSWP/compare/1.11.0...1.12.0) (2026-10-25)
+
+### Features
+
+- **api:** add packs to exist world ([#22](https://github.com/13Aks13/MinecraftSWP/issues/22)) ([43635b2](https://github.com/13Aks13/MinecraftSWP/commit/43635b24c26bbcd073194050d47bfbf4aa595eec))
+
 # [1.11.0](https://github.com/13Aks13/MinecraftSWP/compare/1.10.0...1.11.0) (2026-10-24)
 
 ### Features

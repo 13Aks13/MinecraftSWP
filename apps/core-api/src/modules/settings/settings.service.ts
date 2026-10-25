@@ -104,6 +104,10 @@ const META: Record<string, PropertyMeta> = {
   },
 };
 
+const REQUIRED_PROPERTIES: Record<string, string> = {
+  transport: "nethernet",
+};
+
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private static readonly REQUIRED_PROPERTIES: Record<string, string> = {
