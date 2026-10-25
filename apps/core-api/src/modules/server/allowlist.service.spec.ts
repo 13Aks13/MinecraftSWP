@@ -10,7 +10,11 @@ describe("AllowlistService", () => {
   let service: AllowlistService;
 
   beforeEach(async () => {
-    dataRoot = await mkdtemp(path.join(tmpdir(), "mc-allowlist-"));
+  afterEach(async () => {
+    if (dataRoot) {
+      await rm(dataRoot, { recursive: true, force: true });
+    }
+  });
     const storage = {
       dataRoot,
       allowlistPath: () => path.join(dataRoot, "allowlist.json"),
