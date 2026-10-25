@@ -212,7 +212,16 @@ export class PacksService implements OnModuleInit {
     const where = type ? { type } : {};
     const packs = await this.packs.find({ where, select: { id: true } });
     return this.removeMany(
-      packs.map((pack) => pack.id),
+      try {
+        await this.remove(id, force);
+        deleted += 1;
+      } catch (error) {
+        if (error instanceof ConflictException) {
+          this.logger.log(`Skipping pack ${id}: ${error.message}`);
+          continue;
+        }
+        throw error;
+      }
       force,
     );
   }
