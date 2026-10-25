@@ -164,7 +164,7 @@ export class PacksService implements OnModuleInit {
       for (const world of activeWorlds) {
         const remaining = await this.worldPacks.find({
           where: { worldId: world.id },
-          relations: ["pack"],
+          relations: { pack: true },
         });
         const resourcePacks = remaining
           .filter((link) => link.kind === "resource" && link.pack)
