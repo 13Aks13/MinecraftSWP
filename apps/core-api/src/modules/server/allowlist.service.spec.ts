@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { ConfigService } from "@nestjs/config";
@@ -10,11 +10,7 @@ describe("AllowlistService", () => {
   let service: AllowlistService;
 
   beforeEach(async () => {
-  afterEach(async () => {
-    if (dataRoot) {
-      await rm(dataRoot, { recursive: true, force: true });
-    }
-  });
+    dataRoot = await mkdtemp(path.join(tmpdir(), "minecraft-allowlist-"));
     const storage = {
       dataRoot,
       allowlistPath: () => path.join(dataRoot, "allowlist.json"),
@@ -23,6 +19,10 @@ describe("AllowlistService", () => {
       get: (_key: string, fallback?: string) => fallback,
     } as ConfigService;
     service = new AllowlistService(storage, config);
+  });
+
+  afterEach(async () => {
+    await rm(dataRoot, { recursive: true, force: true });
   });
 
   it("writes players to the Bedrock server-root allowlist.json", async () => {
