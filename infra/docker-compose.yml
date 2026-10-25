@@ -87,7 +87,7 @@ services:
       STORAGE_ROOT: /storage
       DATA_ROOT: /data
       BEDROCK_CONTAINER: mc-bedrock
-      BEDROCK_LEVEL_NAME: Experiment
+BEDROCK_LEVEL_NAME: active
       DOCKER_SOCKET: /var/run/docker.sock
     volumes:
       - ./storage:/storage
