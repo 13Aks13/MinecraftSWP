@@ -22,7 +22,7 @@ services:
       - --entrypoints.web.transport.respondingTimeouts.writeTimeout=0
       - --entrypoints.web.transport.respondingTimeouts.idleTimeout=0
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
-      - --certificatesresolvers.myresolver.acme.email=13k.andrew13@gmail.com
+      - --certificatesresolvers.myresolver.acme.email=${ACME_EMAIL:-13k.andrew13@gmail.com}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
       - --log.level=INFO
       - --accesslog=true
