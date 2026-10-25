@@ -1,3 +1,23 @@
+# [1.16.0](https://github.com/13Aks13/MinecraftSWP/compare/1.15.0...1.16.0) (2026-10-25)
+
+### Features
+
+- **infra:** bedrock server ([69d7173](https://github.com/13Aks13/MinecraftSWP/commit/69d7173b01d271f41011cad1f852a66dc1d50722))
+
+# [1.15.0](https://github.com/13Aks13/MinecraftSWP/compare/1.14.0...1.15.0) (2026-10-25)
+
+### Features
+
+- **infra:** traefik ([6e51661](https://github.com/13Aks13/MinecraftSWP/commit/6e51661aa9e1ea39808bce79f1b5840856b2ba03))
+- **infra:** traefik ([35f20f0](https://github.com/13Aks13/MinecraftSWP/commit/35f20f02a61e4d3107bfc74c4816c2a243f4647f))
+
+# [1.14.0](https://github.com/13Aks13/MinecraftSWP/compare/1.13.0...1.14.0) (2026-10-25)
+
+### Features
+
+- **api:** infra storage ([6a2c23d](https://github.com/13Aks13/MinecraftSWP/commit/6a2c23da3d1043a2a4f020762a3630646993a092))
+- **infra:** web and traefic ([c77e8b0](https://github.com/13Aks13/MinecraftSWP/commit/c77e8b0989895816df30f6934a2e0af3fd4cd076))
+
 # [1.13.0](https://github.com/13Aks13/MinecraftSWP/compare/1.12.0...1.13.0) (2026-10-25)
 
 ### Bug Fixes
