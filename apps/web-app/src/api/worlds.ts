@@ -22,6 +22,14 @@ export async function activateWorld(id: string): Promise<WorldDto> {
   return data;
 }
 
+export async function updateWorldPacks(
+  id: string,
+  payload: Pick<CreateWorldDto, "resourcePackIds" | "behaviorPackIds">,
+): Promise<WorldDto> {
+  const { data } = await api.put<WorldDto>(`/worlds/${id}/packs`, payload);
+  return data;
+}
+
 export async function cloneWorld(id: string): Promise<WorldDto> {
   const { data } = await api.post<WorldDto>(`/worlds/${id}/clone`);
   return data;
