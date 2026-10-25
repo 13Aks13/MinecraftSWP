@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/13Aks13/MinecraftSWP/compare/1.14.0...1.15.0) (2026-10-25)
+
+### Features
+
+- **infra:** traefik ([6e51661](https://github.com/13Aks13/MinecraftSWP/commit/6e51661aa9e1ea39808bce79f1b5840856b2ba03))
+- **infra:** traefik ([35f20f0](https://github.com/13Aks13/MinecraftSWP/commit/35f20f02a61e4d3107bfc74c4816c2a243f4647f))
+
 # [1.14.0](https://github.com/13Aks13/MinecraftSWP/compare/1.13.0...1.14.0) (2026-10-25)
 
 ### Features
