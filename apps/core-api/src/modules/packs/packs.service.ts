@@ -12,6 +12,8 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, type Repository } from "typeorm";
 import { StorageService } from "../../common/storage/storage.service.js";
+import { ServerService } from "../server/server.service.js";
+import { WorldEntity } from "../worlds/entities/world.entity.js";
 import { WorldPackEntity } from "../worlds/entities/world-pack.entity.js";
 import type { ListPacksQueryDto } from "./dto/list-packs.dto.js";
 import { PackEntity } from "./entities/pack.entity.js";
@@ -25,7 +27,10 @@ export class PacksService implements OnModuleInit {
     private readonly packs: Repository<PackEntity>,
     @InjectRepository(WorldPackEntity)
     private readonly worldPacks: Repository<WorldPackEntity>,
+    @InjectRepository(WorldEntity)
+    private readonly worlds: Repository<WorldEntity>,
     @Inject(StorageService) private readonly storage: StorageService,
+    @Inject(ServerService) private readonly server: ServerService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -99,13 +104,17 @@ export class PacksService implements OnModuleInit {
     }));
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, force = false): Promise<void> {
     const pack = await this.get(id);
     const usages = await this.worldPacks.count({ where: { packId: id } });
-    if (usages > 0) {
+    if (usages > 0 && !force) {
       throw new ConflictException(
-        `Pack "${pack.name}" is used by ${usages} world configuration(s); detach it first`,
+        `Pack "${pack.name}" is used by ${usages} world configuration(s); detach it first or use force=true`,
       );
+    }
+
+    if (usages > 0 && force) {
+      await this.detachFromWorlds(pack);
     }
 
     await this.packs.delete({ id });
@@ -119,11 +128,78 @@ export class PacksService implements OnModuleInit {
     }
   }
 
-  async removeMany(ids: string[]): Promise<{ deleted: number }> {
+  /**
+   * Detach a pack from all worlds it is attached to.
+   * When the pack is attached to the active world the Bedrock server is stopped
+   * first, pack files are rewritten without the deleted pack, then the server
+   * is restarted.
+   */
+  private async detachFromWorlds(pack: PackEntity): Promise<void> {
+    const links = await this.worldPacks.find({
+      where: { packId: pack.id },
+      select: { worldId: true, kind: true },
+    });
+
+    const worldIds = [...new Set(links.map((link) => link.worldId))];
+    const activeWorlds = await this.worlds.find({
+      where: { id: In(worldIds), status: "active" },
+    });
+
+    let stopped = false;
+    if (activeWorlds.length > 0) {
+      this.logger.warn(
+        `Stopping server to detach pack "${pack.name}" from active world(s): ${activeWorlds.map((w) => w.name).join(", ")}`,
+      );
+      await this.server.stop().catch((error) => {
+        this.logger.warn(`Could not stop Bedrock: ${(error as Error).message}`);
+      });
+      stopped = true;
+    }
+
+    try {
+      // Remove all world_pack associations for this pack.
+      await this.worldPacks.delete({ packId: pack.id });
+
+      // For each still-active world rebuild the pack manifest without the deleted pack.
+      for (const world of activeWorlds) {
+        const remaining = await this.worldPacks.find({
+          where: { worldId: world.id },
+          relations: ["pack"],
+        });
+        const resourcePacks = remaining
+          .filter((link) => link.kind === "resource" && link.pack)
+          .map((link) => link.pack);
+        const behaviorPacks = remaining
+          .filter((link) => link.kind === "behavior" && link.pack)
+          .map((link) => link.pack);
+
+        // Update the live world directory.
+        await this.storage.writeWorldPackFiles(
+          this.storage.activeWorldDir(),
+          resourcePacks,
+          behaviorPacks,
+        );
+
+        // Update the library copy as well.
+        const libraryDir = path.join(this.storage.worldsDir(), world.folderName);
+        await this.storage.writeWorldPackFiles(libraryDir, resourcePacks, behaviorPacks);
+      }
+    } finally {
+      if (stopped) {
+        await this.server.start().catch((error) => {
+          this.logger.error(
+            `Could not restart Bedrock after pack deletion: ${(error as Error).message}`,
+          );
+        });
+      }
+    }
+  }
+
+  async removeMany(ids: string[], force = false): Promise<{ deleted: number }> {
     let deleted = 0;
     for (const id of ids) {
       try {
-        await this.remove(id);
+        await this.remove(id, force);
         deleted += 1;
       } catch {
         // skip packs in use
@@ -132,10 +208,13 @@ export class PacksService implements OnModuleInit {
     return { deleted };
   }
 
-  async removeAll(type?: PackType): Promise<{ deleted: number }> {
+  async removeAll(type?: PackType, force = false): Promise<{ deleted: number }> {
     const where = type ? { type } : {};
     const packs = await this.packs.find({ where, select: { id: true } });
-    return this.removeMany(packs.map((pack) => pack.id));
+    return this.removeMany(
+      packs.map((pack) => pack.id),
+      force,
+    );
   }
   toDto(pack: PackEntity): PackDto {
     return {

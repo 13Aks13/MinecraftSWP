@@ -149,8 +149,11 @@ export class PacksController {
 
   @Delete(":id")
   @Roles("admin", "moderator")
-  async remove(@Param("id", ParseUUIDPipe) id: string): Promise<{ deleted: true }> {
-    await this.packs.remove(id);
+  async remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("force") force?: string,
+  ): Promise<{ deleted: true }> {
+    await this.packs.remove(id, force === "true");
     return { deleted: true };
   }
 
@@ -160,12 +163,14 @@ export class PacksController {
     @Body() body: { ids?: string[] },
     @Query("type") type?: "resource" | "behavior",
     @Query("all") all?: string,
+    @Query("force") force?: string,
   ): Promise<{ deleted: number }> {
+    const opts = force === "true";
     if (body?.ids?.length) {
-      return this.packs.removeMany(body.ids);
+      return this.packs.removeMany(body.ids, opts);
     }
     if (all === "true" || !body?.ids?.length) {
-      return this.packs.removeAll(type);
+      return this.packs.removeAll(type, opts);
     }
     return { deleted: 0 };
   }

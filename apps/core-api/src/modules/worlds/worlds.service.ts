@@ -184,6 +184,41 @@ export class WorldsService {
     return this.toDto(await this.get(id));
   }
 
+  /**
+   * Deactivate the currently active world so it can be deleted or reconfigured.
+   * The server is stopped, the live world is synced back into the library, and
+   * the world's status is reverted to "ready".  The server is left stopped
+   * because there is no active world to run.
+   */
+  async deactivate(id: string): Promise<void> {
+    const world = await this.get(id);
+    if (world.status !== "active") {
+      throw new ConflictException(
+        `World "${world.name}" is not active; only the active world can be deactivated`,
+      );
+    }
+
+    let stopped = false;
+    try {
+      await this.server.stop().catch((error) => {
+        this.logger.warn(`Could not stop Bedrock before deactivating: ${(error as Error).message}`);
+      });
+      stopped = true;
+      await this.syncActiveWorld();
+      await this.worlds.update({ id }, { status: "ready" });
+      this.logger.log(`Deactivated world "${world.name}" — server left stopped`);
+    } catch (error) {
+      if (stopped) {
+        await this.server.start().catch((startError) => {
+          this.logger.warn(
+            `Could not restart Bedrock after deactivation failure: ${(startError as Error).message}`,
+          );
+        });
+      }
+      throw error;
+    }
+  }
+
   async updatePacks(id: string, dto: UpdateWorldPacksDto): Promise<WorldDto> {
     const world = await this.get(id);
     const resourceIds = [...new Set(dto.resourcePackIds ?? [])];

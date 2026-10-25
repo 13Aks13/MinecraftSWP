@@ -1,6 +1,6 @@
-import { cp, mkdir, readdir, rename, rm, statfs } from "node:fs/promises";
+import { cp, mkdir, readdir, rename, rm, statfs, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { STORAGE_DIRS } from "@mc/shared";
+import { type PackFileEntry, STORAGE_DIRS } from "@mc/shared";
 import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
@@ -9,6 +9,12 @@ export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   readonly root: string;
   readonly dataRoot: string;
+
+  /** File names Bedrock Dedicated Server reads from inside a world folder. */
+  static readonly PACK_FILES = {
+    resource: "world_resource_packs.json",
+    behavior: "world_behavior_packs.json",
+  } as const;
 
   constructor(@Inject(ConfigService) private readonly config: ConfigService) {
     this.root = path.resolve(config.get<string>("STORAGE_ROOT", "./storage"));
@@ -106,6 +112,27 @@ export class StorageService implements OnModuleInit {
   activeWorldDir(): string {
     const levelName = this.config.get<string>("BEDROCK_LEVEL_NAME", "active");
     return path.join(this.dataRoot, "worlds", levelName);
+  }
+
+  /** Serialise the pack selection into the Bedrock world pack JSON files. */
+  async writeWorldPackFiles(
+    folder: string,
+    resource: PackFileEntry[],
+    behavior: PackFileEntry[],
+  ): Promise<void> {
+    const serialize = (packs: PackFileEntry[]) =>
+      packs.map((pack) => ({ pack_id: pack.packUuid, version: pack.versionArray }));
+
+    await writeFile(
+      path.join(folder, StorageService.PACK_FILES.resource),
+      `${JSON.stringify(serialize(resource), null, 2)}\n`,
+      "utf8",
+    );
+    await writeFile(
+      path.join(folder, StorageService.PACK_FILES.behavior),
+      `${JSON.stringify(serialize(behavior), null, 2)}\n`,
+      "utf8",
+    );
   }
 
   serverPropertiesPath(): string {

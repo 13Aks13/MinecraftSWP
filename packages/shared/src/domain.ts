@@ -21,3 +21,9 @@ export const PACK_TYPE_LABELS: Record<PackType, string> = {
   resource: "Resource Pack",
   behavior: "Behavior Pack",
 };
+
+/** Minimal pack fields written into world_resource_packs.json / world_behavior_packs.json. */
+export interface PackFileEntry {
+  packUuid: string;
+  versionArray: number[];
+}
