@@ -104,12 +104,11 @@ const META: Record<string, PropertyMeta> = {
   },
 };
 
-const REQUIRED_PROPERTIES: Record<string, string> = {
-  transport: "nethernet",
-};
-
 @Injectable()
 export class SettingsService implements OnModuleInit {
+  private static readonly REQUIRED_PROPERTIES: Record<string, string> = {
+    transport: "nethernet",
+  };
   private readonly logger = new Logger(SettingsService.name);
   private cache: Record<string, string> = {};
 
@@ -193,12 +192,18 @@ export class SettingsService implements OnModuleInit {
   }
 
   private needsRequiredProperties(): boolean {
-    return Object.entries(REQUIRED_PROPERTIES).some(([key, value]) => this.cache[key] !== value);
+    return Object.entries(SettingsService.REQUIRED_PROPERTIES).some(
+      ([key, value]) => this.cache[key] !== value,
+    );
   }
 
   private async persist(): Promise<void> {
     const onDisk = await this.read();
-    this.cache = { ...onDisk, ...this.cache, ...REQUIRED_PROPERTIES };
+    this.cache = {
+      ...onDisk,
+      ...this.cache,
+      ...SettingsService.REQUIRED_PROPERTIES,
+    };
     const lines = [
       "# Managed by the Minecraft Platform API. Manual edits may be overwritten.",
       ...Object.keys(this.cache)
