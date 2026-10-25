@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ServerModule } from "../server/server.module.js";
+import { WorldEntity } from "../worlds/entities/world.entity.js";
 import { WorldPackEntity } from "../worlds/entities/world-pack.entity.js";
 import { ImportJobEntity } from "./entities/import-job.entity.js";
 import { PackEntity } from "./entities/pack.entity.js";
@@ -13,7 +15,10 @@ import { PackImportService } from "./services/pack-import.service.js";
 import { ZipExtractorService } from "./services/zip-extractor.service.js";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PackEntity, WorldPackEntity, ImportJobEntity])],
+  imports: [
+    TypeOrmModule.forFeature([PackEntity, WorldPackEntity, WorldEntity, ImportJobEntity]),
+    ServerModule,
+  ],
   controllers: [PacksController],
   providers: [
     PacksService,

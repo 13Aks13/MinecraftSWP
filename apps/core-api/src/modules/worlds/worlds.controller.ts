@@ -57,6 +57,14 @@ export class WorldsController {
     return this.worlds.activate(id);
   }
 
+  @Post(":id/deactivate")
+  @Roles("admin", "moderator")
+  @ApiOperation({ summary: "Stop the server and revert the active world to 'ready' status" })
+  async deactivate(@Param("id", ParseUUIDPipe) id: string): Promise<{ deactivated: true }> {
+    await this.worlds.deactivate(id);
+    return { deactivated: true };
+  }
+
   @Post(":id/clone")
   @Roles("admin", "moderator")
   clone(@Param("id", ParseUUIDPipe) id: string): Promise<WorldDto> {
