@@ -21,6 +21,9 @@ services:
       - --entrypoints.web.transport.respondingTimeouts.readTimeout=0
       - --entrypoints.web.transport.respondingTimeouts.writeTimeout=0
       - --entrypoints.web.transport.respondingTimeouts.idleTimeout=0
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.email=13k.andrew13@gmail.com
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
       - --log.level=INFO
       - --accesslog=true
     ports:
@@ -164,7 +167,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: minecraft-proxy
-      traefik.http.routers.mc-web.rule: Host(`${APP_HOST:-app.localhost}`) || Host(`localhost`)
+      traefik.http.routers.mc-web.rule: Host(`${APP_HOST:-beta-step.duckdns.org}`)
       traefik.http.routers.mc-web.entrypoints: websecure
       traefik.http.routers.mc-web.tls: "true"
       traefik.http.routers.mc-web.tls.certresolver: myresolver
