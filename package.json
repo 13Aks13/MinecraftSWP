@@ -1,6 +1,6 @@
 {
   "name": "minecraft-platform",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "private": true,
   "description": "Minecraft Bedrock management platform (pnpm monorepo)",
   "license": "UNLICENSED",

@@ -1,3 +1,13 @@
+# [1.17.0](https://github.com/13Aks13/MinecraftSWP/compare/1.16.0...1.17.0) (2026-10-25)
+
+### Features
+
+- **api:** added deactivate world, remove packs from worlds ([2c71516](https://github.com/13Aks13/MinecraftSWP/commit/2c71516455253cdb4e60bb87c2d713968c29b060))
+- **api:** added deactivate world, remove packs from worlds ([b6d443c](https://github.com/13Aks13/MinecraftSWP/commit/b6d443c70d863bf0b112a48f441c0dcb20485d8f))
+- **api:** added deactivate world, remove packs from worlds ([860e8e9](https://github.com/13Aks13/MinecraftSWP/commit/860e8e972e72743d586d9e2d5a874aac0bd572ec))
+- **api:** added deactivate world, remove packs from worlds ([a92268a](https://github.com/13Aks13/MinecraftSWP/commit/a92268ae845c7c3d2d922cbf007404e04285297e))
+- **infra:** bedrock server ([f14e314](https://github.com/13Aks13/MinecraftSWP/commit/f14e314219fc3eec492e4eb7bd9b24fc4a44f281))
+
 # [1.16.0](https://github.com/13Aks13/MinecraftSWP/compare/1.15.0...1.16.0) (2026-10-25)
 
 ### Features
