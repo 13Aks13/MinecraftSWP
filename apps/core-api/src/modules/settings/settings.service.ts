@@ -104,7 +104,7 @@ const META: Record<string, PropertyMeta> = {
   },
 };
 
-const REQUIRED_PROPERTIES: Record<string, string> = {
+const _REQUIRED_PROPERTIES: Record<string, string> = {
   transport: "nethernet",
 };
 

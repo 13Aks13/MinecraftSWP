@@ -151,7 +151,6 @@ export class PacksController {
   @Roles("admin", "moderator")
   async remove(
     @Param("id", ParseUUIDPipe) id: string,
-    @Query("force", new ParseBoolPipe({ optional: true })) force?: boolean,
     @Query("force") force?: string,
   ): Promise<{ deleted: true }> {
     await this.packs.remove(id, force === "true");

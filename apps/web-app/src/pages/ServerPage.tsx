@@ -82,7 +82,7 @@ export default function ServerPage() {
       title: "Actions",
       key: "actions",
       width: "20%",
-      render: (_: any, record: AllowListEntry) => (
+      render: (_: unknown, record: AllowListEntry) => (
         <Space>
           <Button
             type="text"

@@ -5,6 +5,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
   type OnModuleInit,
@@ -154,12 +155,11 @@ export class PacksService implements OnModuleInit {
         await this.server.stop();
         stopped = true;
       } catch (error) {
-        this.logger.error(`Failed to stop Bedrock server. Aborting pack detachment to prevent corruption: ${(error as Error).message}`);
+        this.logger.error(
+          `Failed to stop Bedrock server. Aborting pack detachment to prevent corruption: ${(error as Error).message}`,
+        );
         throw new InternalServerErrorException("Could not stop server for maintenance");
       }
-        this.logger.warn(`Could not stop Bedrock: ${(error as Error).message}`);
-      });
-      stopped = true;
     }
 
     try {
@@ -218,16 +218,7 @@ export class PacksService implements OnModuleInit {
     const where = type ? { type } : {};
     const packs = await this.packs.find({ where, select: { id: true } });
     return this.removeMany(
-      try {
-        await this.remove(id, force);
-        deleted += 1;
-      } catch (error) {
-        if (error instanceof ConflictException) {
-          this.logger.log(`Skipping pack ${id}: ${error.message}`);
-          continue;
-        }
-        throw error;
-      }
+      packs.map((pack) => pack.id),
       force,
     );
   }
