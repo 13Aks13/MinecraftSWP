@@ -1,6 +1,6 @@
 {
   "name": "@mc/core-api",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Minecraft Bedrock management platform \u2014 core API",
   "private": true,
   "license": "UNLICENSED",
