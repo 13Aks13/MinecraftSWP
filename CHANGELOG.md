@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/13Aks13/MinecraftSWP/compare/1.13.0...1.14.0) (2026-10-25)
+
+### Features
+
+- **api:** infra storage ([6a2c23d](https://github.com/13Aks13/MinecraftSWP/commit/6a2c23da3d1043a2a4f020762a3630646993a092))
+- **infra:** web and traefic ([c77e8b0](https://github.com/13Aks13/MinecraftSWP/commit/c77e8b0989895816df30f6934a2e0af3fd4cd076))
+
 # [1.13.0](https://github.com/13Aks13/MinecraftSWP/compare/1.12.0...1.13.0) (2026-10-25)
 
 ### Bug Fixes
