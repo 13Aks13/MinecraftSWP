@@ -1,3 +1,9 @@
+# [1.16.0](https://github.com/13Aks13/MinecraftSWP/compare/1.15.0...1.16.0) (2026-10-25)
+
+### Features
+
+- **infra:** bedrock server ([69d7173](https://github.com/13Aks13/MinecraftSWP/commit/69d7173b01d271f41011cad1f852a66dc1d50722))
+
 # [1.15.0](https://github.com/13Aks13/MinecraftSWP/compare/1.14.0...1.15.0) (2026-10-25)
 
 ### Features
