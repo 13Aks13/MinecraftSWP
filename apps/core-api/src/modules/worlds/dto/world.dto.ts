@@ -49,6 +49,21 @@ export class CreateWorldDto {
   behaviorPackIds?: string[];
 }
 
+/** Pack selection can be changed after a world has been created. */
+export class UpdateWorldPacksDto {
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(200)
+  @IsUUID("4", { each: true })
+  resourcePackIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(200)
+  @IsUUID("4", { each: true })
+  behaviorPackIds?: string[];
+}
+
 export class ListWorldsQueryDto {
   @IsOptional()
   @IsString()

@@ -1,7 +1,14 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import type { PackDependency, PackDto, PackType, Paginated } from "@mc/shared";
-import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  type OnModuleInit,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, type Repository } from "typeorm";
 import { StorageService } from "../../common/storage/storage.service.js";
@@ -10,7 +17,9 @@ import type { ListPacksQueryDto } from "./dto/list-packs.dto.js";
 import { PackEntity } from "./entities/pack.entity.js";
 
 @Injectable()
-export class PacksService {
+export class PacksService implements OnModuleInit {
+  private readonly logger = new Logger(PacksService.name);
+
   constructor(
     @InjectRepository(PackEntity)
     private readonly packs: Repository<PackEntity>,
@@ -18,6 +27,19 @@ export class PacksService {
     private readonly worldPacks: Repository<WorldPackEntity>,
     @Inject(StorageService) private readonly storage: StorageService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    const packs = await this.packs.find({ select: { type: true, folderName: true, name: true } });
+    for (const pack of packs) {
+      try {
+        await this.storage.publishPack(pack.type, pack.folderName);
+      } catch (error) {
+        this.logger.warn(
+          `Could not publish pack "${pack.name}" to the Bedrock server folders: ${(error as Error).message}`,
+        );
+      }
+    }
+  }
 
   async list(query: ListPacksQueryDto): Promise<Paginated<PackDto>> {
     const builder = this.packs.createQueryBuilder("pack");
@@ -91,6 +113,7 @@ export class PacksService {
       recursive: true,
       force: true,
     });
+    await this.storage.unpublishPack(pack.type, pack.folderName);
     if (pack.iconPath) {
       await rm(path.join(this.storage.root, pack.iconPath), { force: true });
     }

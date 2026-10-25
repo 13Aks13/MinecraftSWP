@@ -4,6 +4,7 @@ import {
   DeleteOutlined,
   PlayCircleOutlined,
   PlusOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { type CreateWorldDto, formatBytes, type WorldDto } from "@mc/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,7 +29,14 @@ import { useState } from "react";
 import { createBackup } from "../api/backups";
 import { errorMessage } from "../api/client";
 import { listPacks } from "../api/packs";
-import { activateWorld, cloneWorld, createWorld, deleteWorld, listWorlds } from "../api/worlds";
+import {
+  activateWorld,
+  cloneWorld,
+  createWorld,
+  deleteWorld,
+  listWorlds,
+  updateWorldPacks,
+} from "../api/worlds";
 import { canWrite, useAuthStore } from "../store/auth";
 
 const STATUS_COLORS: Record<WorldDto["status"], string> = {
@@ -47,7 +55,9 @@ export default function WorldsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingWorld, setEditingWorld] = useState<WorldDto | null>(null);
   const [form] = Form.useForm<CreateWorldDto>();
+  const [packsForm] = Form.useForm<Pick<CreateWorldDto, "resourcePackIds" | "behaviorPackIds">>();
 
   const worlds = useQuery({
     queryKey: ["worlds", search, page],
@@ -112,6 +122,23 @@ export default function WorldsPage() {
     onError: (error) => message.error(errorMessage(error)),
   });
 
+  const updatePacks = useMutation({
+    mutationFn: ({
+      id,
+      values,
+    }: {
+      id: string;
+      values: Pick<CreateWorldDto, "resourcePackIds" | "behaviorPackIds">;
+    }) => updateWorldPacks(id, values),
+    onSuccess: async (world) => {
+      message.success(`Pack configuration for "${world.name}" updated`);
+      setEditingWorld(null);
+      packsForm.resetFields();
+      await invalidate();
+    },
+    onError: (error) => message.error(errorMessage(error)),
+  });
+
   const columns: TableProps<WorldDto>["columns"] = [
     {
       title: "World",
@@ -164,10 +191,27 @@ export default function WorldsPage() {
     {
       title: "",
       key: "actions",
-      width: 190,
+      width: 220,
       render: (_value, world) =>
         canManage ? (
           <Space size={0}>
+            <Tooltip title="Configure packs">
+              <Button
+                type="text"
+                icon={<SettingOutlined />}
+                onClick={() => {
+                  setEditingWorld(world);
+                  packsForm.setFieldsValue({
+                    resourcePackIds: world.packs
+                      .filter((pack) => pack.type === "resource")
+                      .map((pack) => pack.id),
+                    behaviorPackIds: world.packs
+                      .filter((pack) => pack.type === "behavior")
+                      .map((pack) => pack.id),
+                  });
+                }}
+              />
+            </Tooltip>
             <Tooltip title="Activate on server">
               <Button
                 type="text"
@@ -347,6 +391,56 @@ export default function WorldsPage() {
           </Form.Item>
           <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
             world_resource_packs.json and world_behavior_packs.json are generated automatically.
+          </Typography.Paragraph>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={!!editingWorld}
+        title={editingWorld ? `Configure packs — ${editingWorld.name}` : "Configure packs"}
+        okText="Save packs"
+        confirmLoading={updatePacks.isPending}
+        onCancel={() => {
+          setEditingWorld(null);
+          packsForm.resetFields();
+        }}
+        onOk={() => packsForm.submit()}
+        width={640}
+      >
+        <Form<Pick<CreateWorldDto, "resourcePackIds" | "behaviorPackIds">>
+          form={packsForm}
+          layout="vertical"
+          onFinish={(values) => {
+            if (editingWorld) {
+              updatePacks.mutate({ id: editingWorld.id, values });
+            }
+          }}
+        >
+          <Form.Item name="resourcePackIds" label="Resource packs">
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Select resource packs"
+              options={resourcePacks.map((pack) => ({
+                value: pack.id,
+                label: `${pack.name} (v${pack.version})`,
+              }))}
+            />
+          </Form.Item>
+          <Form.Item name="behaviorPackIds" label="Behavior packs">
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Select behavior packs"
+              options={behaviorPacks.map((pack) => ({
+                value: pack.id,
+                label: `${pack.name} (v${pack.version})`,
+              }))}
+            />
+          </Form.Item>
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+            This creates world_resource_packs.json and world_behavior_packs.json. Saving an active
+            world briefly restarts Bedrock to apply the new configuration.
           </Typography.Paragraph>
         </Form>
       </Modal>

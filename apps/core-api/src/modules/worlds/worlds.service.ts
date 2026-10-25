@@ -15,7 +15,7 @@ import { StorageService } from "../../common/storage/storage.service.js";
 import { dirSize, pathExists } from "../../common/utils/fs.utils.js";
 import { PackEntity } from "../packs/entities/pack.entity.js";
 import { ServerService } from "../server/server.service.js";
-import type { CreateWorldDto, ListWorldsQueryDto } from "./dto/world.dto.js";
+import type { CreateWorldDto, ListWorldsQueryDto, UpdateWorldPacksDto } from "./dto/world.dto.js";
 import { WorldEntity } from "./entities/world.entity.js";
 import { WorldPackEntity } from "./entities/world-pack.entity.js";
 
@@ -179,6 +179,56 @@ export class WorldsService {
       await this.server.start();
     } catch (error) {
       this.logger.warn(`Could not start Bedrock after activation: ${(error as Error).message}`);
+    }
+
+    return this.toDto(await this.get(id));
+  }
+
+  async updatePacks(id: string, dto: UpdateWorldPacksDto): Promise<WorldDto> {
+    const world = await this.get(id);
+    const resourceIds = [...new Set(dto.resourcePackIds ?? [])];
+    const behaviorIds = [...new Set(dto.behaviorPackIds ?? [])];
+    const packs = await this.loadPacks(resourceIds, behaviorIds);
+    const libraryDir = path.join(this.storage.worldsDir(), world.folderName);
+
+    // Keep the library template ready for a future activation. An older
+    // installation may only have the active copy, so recreate its folder.
+    await mkdir(libraryDir, { recursive: true });
+    await this.writePackFiles(libraryDir, packs.resource, packs.behavior);
+
+    let stopped = false;
+    try {
+      if (world.status === "active") {
+        await this.server.stop();
+        stopped = true;
+        await this.writePackFiles(this.storage.activeWorldDir(), packs.resource, packs.behavior);
+      }
+
+      await this.worldPacks.delete({ worldId: world.id });
+      const links = [
+        ...packs.resource.map((pack) =>
+          this.worldPacks.create({ worldId: world.id, packId: pack.id, kind: "resource" }),
+        ),
+        ...packs.behavior.map((pack) =>
+          this.worldPacks.create({ worldId: world.id, packId: pack.id, kind: "behavior" }),
+        ),
+      ];
+      if (links.length > 0) {
+        await this.worldPacks.save(links);
+      }
+      const size = await dirSize(
+        world.status === "active" ? this.storage.activeWorldDir() : libraryDir,
+      );
+      world.sizeBytes = String(size);
+      await this.worlds.save(world);
+    } finally {
+      if (stopped) {
+        await this.server.start().catch((error) => {
+          this.logger.error(
+            `Could not restart Bedrock after updating packs: ${(error as Error).message}`,
+          );
+        });
+      }
     }
 
     return this.toDto(await this.get(id));

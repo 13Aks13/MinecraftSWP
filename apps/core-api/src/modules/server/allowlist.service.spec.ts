@@ -10,8 +10,7 @@ describe("AllowlistService", () => {
   let service: AllowlistService;
 
   beforeEach(async () => {
-    dataRoot = await mkdtemp(path.join(tmpdir(), "allowlist-service-"));
-
+    dataRoot = await mkdtemp(path.join(tmpdir(), "minecraft-allowlist-"));
     const storage = {
       dataRoot,
       allowlistPath: () => path.join(dataRoot, "allowlist.json"),
@@ -23,10 +22,7 @@ describe("AllowlistService", () => {
   });
 
   afterEach(async () => {
-    if (dataRoot) {
-      await rm(dataRoot, { recursive: true, force: true });
-      dataRoot = "";
-    }
+    await rm(dataRoot, { recursive: true, force: true });
   });
 
   it("writes players to the Bedrock server-root allowlist.json", async () => {
@@ -40,9 +36,9 @@ describe("AllowlistService", () => {
 
   it("migrates entries from the world folder when the root file is empty", async () => {
     await writeFile(path.join(dataRoot, "allowlist.json"), "[]\n", "utf8");
-    await mkdir(path.join(dataRoot, "worlds", "Experiment"), { recursive: true });
+    await mkdir(path.join(dataRoot, "worlds", "active"), { recursive: true });
     await writeFile(
-      path.join(dataRoot, "worlds", "Experiment", "allowlist.json"),
+      path.join(dataRoot, "worlds", "active", "allowlist.json"),
       JSON.stringify([{ name: "PapaAks13", xuid: "" }]),
       "utf8",
     );

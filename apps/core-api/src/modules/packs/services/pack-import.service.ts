@@ -135,8 +135,10 @@ export class PackImportService {
               recursive: true,
               force: true,
             });
+            await this.storage.unpublishPack(existing.type, existing.folderName);
           }
           await rename(stagingDir, finalDir);
+          await this.storage.publishPack(packType, folderName);
 
           const sizeBytes = await dirSize(finalDir);
           const entity = existing ?? this.packs.create();
@@ -220,6 +222,9 @@ export class PackImportService {
       select: { folderName: true, id: true },
     });
     const names = new Set(existing.map((pack) => pack.folderName));
+    for (const folder of await this.storage.occupiedPackFolders(type)) {
+      names.add(folder);
+    }
     let candidate = base;
     let suffix = 2;
     while (names.has(candidate)) {

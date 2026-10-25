@@ -8,11 +8,12 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Query,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Roles } from "../../common/decorators/roles.decorator.js";
-import { CreateWorldDto, ListWorldsQueryDto } from "./dto/world.dto.js";
+import { CreateWorldDto, ListWorldsQueryDto, UpdateWorldPacksDto } from "./dto/world.dto.js";
 import { WorldsService } from "./worlds.service.js";
 
 @ApiTags("worlds")
@@ -37,6 +38,16 @@ export class WorldsController {
   @ApiOperation({ summary: "Create a world and generate pack configuration files" })
   create(@Body() dto: CreateWorldDto): Promise<WorldDto> {
     return this.worlds.create(dto);
+  }
+
+  @Put(":id/packs")
+  @Roles("admin", "moderator")
+  @ApiOperation({ summary: "Update a world's packs and generate Bedrock pack configuration files" })
+  updatePacks(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: UpdateWorldPacksDto,
+  ): Promise<WorldDto> {
+    return this.worlds.updatePacks(id, dto);
   }
 
   @Post(":id/activate")

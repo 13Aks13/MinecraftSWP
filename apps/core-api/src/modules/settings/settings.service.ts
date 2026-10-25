@@ -77,14 +77,12 @@ const META: Record<string, PropertyMeta> = {
     label: "IPv4 port",
     type: "number",
     default: "19132",
-    readOnly: true,
   },
   "server-portv6": {
     key: "server-portv6",
     label: "IPv6 port",
     type: "number",
     default: "19133",
-    readOnly: true,
   },
   "enable-lan-visibility": {
     key: "enable-lan-visibility",
@@ -100,6 +98,10 @@ const META: Record<string, PropertyMeta> = {
   },
 };
 
+const REQUIRED_PROPERTIES: Record<string, string> = {
+  transport: "nethernet",
+};
+
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);
@@ -109,6 +111,9 @@ export class SettingsService implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     this.cache = await this.read();
+    if (this.needsRequiredProperties()) {
+      await this.persist();
+    }
   }
 
   async list(): Promise<ServerPropertyDto[]> {
@@ -181,7 +186,13 @@ export class SettingsService implements OnModuleInit {
     return values;
   }
 
+  private needsRequiredProperties(): boolean {
+    return Object.entries(REQUIRED_PROPERTIES).some(([key, value]) => this.cache[key] !== value);
+  }
+
   private async persist(): Promise<void> {
+    const onDisk = await this.read();
+    this.cache = { ...onDisk, ...this.cache, ...REQUIRED_PROPERTIES };
     const lines = [
       "# Managed by the Minecraft Platform API. Manual edits may be overwritten.",
       ...Object.keys(this.cache)

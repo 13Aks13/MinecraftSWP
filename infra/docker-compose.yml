@@ -176,20 +176,15 @@ services:
     environment:
       EULA: "TRUE"
       LEVEL_NAME: active
-      # Keep the server on the same uid/gid as core-api so both containers can
-      # read/write worlds and downloaded packs without permission conflicts.
+      TRANSPORT: nethernet
+      SERVER_UDP_PORTS: "19140-19155:19140-19155"
       UID: "1000"
       GID: "1000"
-      # Server name, gamemode, difficulty, max players and similar values are
-      # managed through the Settings page (server.properties). Environment
-      # variables here would overwrite them on every start.
     ports:
-      - "19132:19132/udp"
-      - "19133:19133/udp"
+      - "19132:19132/tcp"
+      - "19140-19155:19140-19155/udp"
     volumes:
       - ./data:/data
-      - ./storage/resource_packs:/data/resource_packs
-      - ./storage/behavior_packs:/data/behavior_packs
     networks:
       - backend
     stdin_open: true
