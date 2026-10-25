@@ -37,5 +37,6 @@ export const SERVER_PROPERTY_ALLOWLIST = [
   "server-port",
   "server-portv6",
   "enable-lan-visibility",
+  "emit-server-telemetry",
   "beta-apis",
 ] as const;

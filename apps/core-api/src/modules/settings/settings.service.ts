@@ -96,6 +96,12 @@ const META: Record<string, PropertyMeta> = {
     type: "boolean",
     default: "false",
   },
+  "emit-server-telemetry": {
+    key: "emit-server-telemetry",
+    label: "Emit server telemetry",
+    type: "boolean",
+    default: "false",
+  },
 };
 
 const REQUIRED_PROPERTIES: Record<string, string> = {
