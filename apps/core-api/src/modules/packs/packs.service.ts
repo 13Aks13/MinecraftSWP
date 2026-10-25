@@ -150,7 +150,13 @@ export class PacksService implements OnModuleInit {
       this.logger.warn(
         `Stopping server to detach pack "${pack.name}" from active world(s): ${activeWorlds.map((w) => w.name).join(", ")}`,
       );
-      await this.server.stop().catch((error) => {
+      try {
+        await this.server.stop();
+        stopped = true;
+      } catch (error) {
+        this.logger.error(`Failed to stop Bedrock server. Aborting pack detachment to prevent corruption: ${(error as Error).message}`);
+        throw new InternalServerErrorException("Could not stop server for maintenance");
+      }
         this.logger.warn(`Could not stop Bedrock: ${(error as Error).message}`);
       });
       stopped = true;
