@@ -87,7 +87,7 @@ services:
       STORAGE_ROOT: /storage
       DATA_ROOT: /data
       BEDROCK_CONTAINER: mc-bedrock
-BEDROCK_LEVEL_NAME: active
+      BEDROCK_LEVEL_NAME: active
       DOCKER_SOCKET: /var/run/docker.sock
     volumes:
       - ./storage:/storage
@@ -175,7 +175,7 @@ BEDROCK_LEVEL_NAME: active
     container_name: mc-bedrock
     environment:
       EULA: "TRUE"
-      LEVEL_NAME: Experiment
+      LEVEL_NAME: active
       TRANSPORT: nethernet
       SERVER_UDP_PORTS: "19140-19155:19140-19155"
       UID: "1000"

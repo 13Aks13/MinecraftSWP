@@ -10,7 +10,7 @@ describe("SettingsService", () => {
     const propertiesPath = path.join(dataRoot, "server.properties");
     await writeFile(
       propertiesPath,
-      ["server-name=Test", "allow-list=true", "level-name=Experiment", "custom-flag=keep-me"].join(
+      ["server-name=Test", "allow-list=true", "level-name=active", "custom-flag=keep-me"].join(
         "\n",
       ),
       "utf8",
@@ -26,7 +26,7 @@ describe("SettingsService", () => {
     const text = await readFile(propertiesPath, "utf8");
     expect(text).toContain("transport=nethernet");
     expect(text).toContain("custom-flag=keep-me");
-    expect(text).toContain("level-name=Experiment");
+    expect(text).toContain("level-name=active");
     expect(text).toContain("max-players=12");
   });
 });
