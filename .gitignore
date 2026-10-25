@@ -34,4 +34,7 @@ logs/
 # test output
 test-results/
 playwright-report/
-/infra/storage/
+/infra/storage/resource_packs/*
+/infra/storage/behavior_packs/*
+/infra/storage/metadata/*
+/infra/storage/worlds/*

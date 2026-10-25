@@ -29,6 +29,7 @@ services:
       - "${TRAEFIK_DASHBOARD_PORT:-8090}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
     networks:
       - proxy
     labels:
@@ -164,7 +165,9 @@ services:
       traefik.enable: "true"
       traefik.docker.network: minecraft-proxy
       traefik.http.routers.mc-web.rule: Host(`${APP_HOST:-app.localhost}`) || Host(`localhost`)
-      traefik.http.routers.mc-web.entrypoints: web
+      traefik.http.routers.mc-web.entrypoints: websecure
+      traefik.http.routers.mc-web.tls: "true"
+      traefik.http.routers.mc-web.tls.certresolver: myresolver
       traefik.http.routers.mc-web.priority: "10"
       traefik.http.services.mc-web.loadbalancer.server.port: "80"
     restart: unless-stopped
