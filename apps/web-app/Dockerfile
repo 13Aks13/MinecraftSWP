@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1.7
-FROM node:24-alpine AS base
+FROM node:26.12.1-alpine AS base
 ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
     CI=true
-RUN corepack enable && corepack prepare pnpm@12.14.0 --activate
+RUN npm install --global pnpm@12.15.0
 WORKDIR /repo
 
 FROM base AS deps
