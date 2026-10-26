@@ -1,3 +1,9 @@
+# [1.18.0](https://github.com/13Aks13/MinecraftSWP/compare/1.17.0...1.18.0) (2026-10-26)
+
+### Features
+
+- **infra:** ci/cd auto deploy a new release ([cab90fd](https://github.com/13Aks13/MinecraftSWP/commit/cab90fd44d1a9a29546762789d98eeb3310312bc))
+
 # [1.17.0](https://github.com/13Aks13/MinecraftSWP/compare/1.16.0...1.17.0) (2026-10-25)
 
 ### Features
