@@ -1,3 +1,9 @@
+# [1.21.0](https://github.com/13Aks13/MinecraftSWP/compare/1.20.0...1.21.0) (2026-10-26)
+
+### Features
+
+- **infra:** release deploy ([ba1d33b](https://github.com/13Aks13/MinecraftSWP/commit/ba1d33ba1e3417d04b059d8c2215f7abb2f6ac05))
+
 # [1.20.0](https://github.com/13Aks13/MinecraftSWP/compare/1.19.0...1.20.0) (2026-10-26)
 
 ### Features
