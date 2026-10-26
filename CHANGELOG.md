@@ -1,3 +1,9 @@
+# [1.22.0](https://github.com/13Aks13/MinecraftSWP/compare/1.21.0...1.22.0) (2026-10-26)
+
+### Features
+
+- **infra:** add verbose git remote logging for deploy debugging ([86b2dde](https://github.com/13Aks13/MinecraftSWP/commit/86b2ddeb4868153567d6571f363cee8575e9cb3f))
+
 # [1.21.0](https://github.com/13Aks13/MinecraftSWP/compare/1.20.0...1.21.0) (2026-10-26)
 
 ### Features
