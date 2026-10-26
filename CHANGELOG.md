@@ -1,3 +1,9 @@
+## [1.24.1](https://github.com/13Aks13/MinecraftSWP/compare/1.24.0...1.24.1) (2026-10-26)
+
+### Bug Fixes
+
+- **infra:** use positive git dir check to avoid ssh-action exit code trap ([eee27ae](https://github.com/13Aks13/MinecraftSWP/commit/eee27aea982b44690a750a3ddf4604644a9ba196))
+
 # [1.24.0](https://github.com/13Aks13/MinecraftSWP/compare/1.23.0...1.24.0) (2026-10-26)
 
 ### Features
