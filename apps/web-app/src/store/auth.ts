@@ -17,7 +17,10 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (token, user) => set({ token, user }),
       logout: () => set({ token: null, user: null }),
     }),
-    { name: "mc-platform-auth" },
+    {
+      name: "mc-platform-auth",
+      version: 2,
+    },
   ),
 );
 
