@@ -1,6 +1,6 @@
 import { type INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import * as request from "supertest";
+import request from "supertest";
 import { AppModule } from "../../src/app.module.js";
 import { getAuthToken } from "./test-helpers.js";
 
@@ -13,6 +13,7 @@ describe("ServerLifecycle (Contract)", () => {
       imports: [AppModule],
     }).compile();
     app = module.createNestApplication();
+    app.setGlobalPrefix("api/v1");
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
     authToken = await getAuthToken(app);
@@ -24,7 +25,7 @@ describe("ServerLifecycle (Contract)", () => {
 
   it("GET /api/server/status returns server status", async () => {
     const res = await request(app.getHttpServer())
-      .get("/api/server/status")
+      .get("/api/v1/server/status")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     expect(res.body).toHaveProperty("exists");
@@ -33,7 +34,7 @@ describe("ServerLifecycle (Contract)", () => {
 
   it("POST /api/server/start returns 202", async () => {
     const res = await request(app.getHttpServer())
-      .post("/api/server/start")
+      .post("/api/v1/server/start")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(202);
     expect(res.body).toBeUndefined();
@@ -41,7 +42,7 @@ describe("ServerLifecycle (Contract)", () => {
 
   it("POST /api/server/stop returns 202", async () => {
     const res = await request(app.getHttpServer())
-      .post("/api/server/stop")
+      .post("/api/v1/server/stop")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(202);
     expect(res.body).toBeUndefined();
@@ -49,7 +50,7 @@ describe("ServerLifecycle (Contract)", () => {
 
   it("POST /api/server/restart returns 202", async () => {
     const res = await request(app.getHttpServer())
-      .post("/api/server/restart")
+      .post("/api/v1/server/restart")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(202);
     expect(res.body).toBeUndefined();

@@ -1,6 +1,6 @@
 import { type INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import * as request from "supertest";
+import request from "supertest";
 import { AppModule } from "../../src/app.module.js";
 import { getAuthToken } from "./test-helpers.js";
 
@@ -24,7 +24,7 @@ describe("Logs (Contract)", () => {
 
   it("GET /api/server/logs returns log text", async () => {
     const res = await request(app.getHttpServer())
-      .get("/api/server/logs")
+      .get("/api/v1/server/logs")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     expect(typeof res.body).toBe("string");

@@ -1,6 +1,6 @@
 import { type INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import * as request from "supertest";
+import request from "supertest";
 import { AppModule } from "../../src/app.module.js";
 import { getAuthToken } from "./test-helpers.js";
 
@@ -24,7 +24,7 @@ describe("Backups (Contract)", () => {
 
   it("GET /api/backups returns list", async () => {
     const res = await request(app.getHttpServer())
-      .get("/api/backups")
+      .get("/api/v1/backups")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     expect(res.body).toHaveProperty("items");
@@ -52,7 +52,7 @@ describe("Config (Contract)", () => {
 
   it("GET /api/config returns settings", async () => {
     const res = await request(app.getHttpServer())
-      .get("/api/config")
+      .get("/api/v1/config")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     expect(res.body).toHaveProperty("settings");
@@ -60,7 +60,7 @@ describe("Config (Contract)", () => {
 
   it("PUT /api/config updates settings", async () => {
     const res = await request(app.getHttpServer())
-      .put("/api/config")
+      .put("/api/v1/config")
       .set("Authorization", `Bearer ${authToken}`)
       .send({ "server-name": "updated" })
       .expect(200);
