@@ -79,12 +79,14 @@ jobs:
             # The directory was historically populated from release tarballs and has
             # no .git. Bootstrap a work tree in place: runtime state (.env, infra/data,
             # infra/storage, infra/letsencrypt) is untracked and therefore preserved.
-            if [ ! -d .git ]; then
+            # Note: we check [ -d .git ] (positive check) because [ ! -d .git ] returns
+            # exit code 1 when .git exists, which ssh-action treats as a fatal error.
+            if [ -d .git ]; then
+              echo "==> Git work tree already exists"
+            else
               echo "==> No git work tree found, initialising in place"
               git init -q
               echo "==> Git initialized"
-            else
-              echo "==> Git work tree already exists"
             fi
 
             # Configure remote origin (always reset to be safe)
