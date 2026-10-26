@@ -55,47 +55,52 @@ jobs:
           script_stop: true
           command_timeout: 30m
           script: |
-            set -euo pipefail
+            set -uo pipefail
 
             DEPLOY_DIR=/home/ubuntu/minecraft-swp
             REPO_URL=https://github.com/13Aks13/MinecraftSWP.git
             TAG="${RELEASE_TAG:?RELEASE_TAG is not set}"
 
             echo "==> Deploying release ${TAG}"
+            echo "==> Deploy dir: $DEPLOY_DIR"
+            echo "==> Repo URL: $REPO_URL"
 
+            # Check git availability
             if ! command -v git >/dev/null 2>&1; then
               echo "==> ERROR: git is not installed on the server" >&2
               exit 1
             fi
+            echo "==> Git version: $(git --version)"
 
-            mkdir -p "$DEPLOY_DIR"
-            cd "$DEPLOY_DIR"
+            mkdir -p "$DEPLOY_DIR" || { echo "==> ERROR: mkdir -p $DEPLOY_DIR failed" >&2; exit 1; }
+            cd "$DEPLOY_DIR" || { echo "==> ERROR: cannot cd to $DEPLOY_DIR" >&2; exit 1; }
+            echo "==> Current directory: $(pwd)"
 
             # The directory was historically populated from release tarballs and has
             # no .git. Bootstrap a work tree in place: runtime state (.env, infra/data,
             # infra/storage, infra/letsencrypt) is untracked and therefore preserved.
             if [ ! -d .git ]; then
               echo "==> No git work tree found, initialising in place"
-              git init -q
-            fi
-
-            echo "==> Configuring remote origin"
-            if git remote get-url origin >/dev/null 2>&1; then
-              echo "==> origin already exists, updating URL"
-              git remote set-url origin "$REPO_URL"
+              git init -q || { echo "==> ERROR: git init failed" >&2; exit 1; }
+              echo "==> Git initialized"
             else
-              echo "==> Adding origin remote"
-              git remote add origin "$REPO_URL"
+              echo "==> Git work tree already exists"
             fi
 
-            echo "==> Configured remotes:"
-            git remote -v
+            # Configure remote origin (always reset to be safe)
+            echo "==> Configuring remote origin to $REPO_URL"
+            git remote remove origin 2>/dev/null || true
+            git remote add origin "$REPO_URL" || { echo "==> ERROR: git remote add failed" >&2; exit 1; }
+            echo "==> Remote configured:"
+            git remote -v || { echo "==> ERROR: git remote -v failed" >&2; exit 1; }
 
             echo "==> Fetching ${TAG}"
-            git fetch --prune --tags --force origin
+            git fetch --prune --tags --force origin || { echo "==> ERROR: git fetch failed" >&2; exit 1; }
+            echo "==> Fetch complete"
 
             echo "==> Checking out ${TAG}"
-            git -c advice.detachedHead=false checkout --force --detach "refs/tags/${TAG}"
+            git -c advice.detachedHead=false checkout --force --detach "refs/tags/${TAG}" || { echo "==> ERROR: git checkout failed" >&2; exit 1; }
+            echo "==> Checkout complete"
 
             if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
               echo "Working tree does not match ${TAG}:" >&2
@@ -112,12 +117,13 @@ jobs:
               echo "Create it manually (copy .env.example and set production values) before deploying." >&2
               exit 1
             fi
+            echo "==> .env found"
 
             # No `down` here: `up` recreates changed services and keeps postgres,
             # redis and the proxy running, so the outage window stays minimal.
             echo "==> Running docker compose up"
             docker compose -f infra/docker-compose.yml --env-file .env \
-              up -d --build --remove-orphans --wait --wait-timeout 1200
+              up -d --build --remove-orphans --wait --wait-timeout 1200 || { echo "==> ERROR: docker compose up failed" >&2; exit 1; }
 
             echo "==> Verifying the API through the proxy"
             for attempt in $(seq 1 30); do
