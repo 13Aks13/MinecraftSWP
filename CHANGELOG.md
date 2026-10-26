@@ -1,3 +1,9 @@
+# [1.28.0](https://github.com/13Aks13/MinecraftSWP/compare/1.27.0...1.28.0) (2026-10-26)
+
+### Features
+
+- **infra:** bedrock settings ([fae6efc](https://github.com/13Aks13/MinecraftSWP/commit/fae6efc8190636972edc0ff31ae7fa6ef716be1c))
+
 # [1.27.0](https://github.com/13Aks13/MinecraftSWP/compare/1.26.0...1.27.0) (2026-10-26)
 
 ### Features
