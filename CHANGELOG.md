@@ -1,3 +1,14 @@
+# [1.20.0](https://github.com/13Aks13/MinecraftSWP/compare/1.19.0...1.20.0) (2026-10-26)
+
+### Features
+
+- **api:** auth ([cad81ce](https://github.com/13Aks13/MinecraftSWP/commit/cad81ce6e51587af70a6621579064166e10b1faf))
+- **api:** auth ([a8ba393](https://github.com/13Aks13/MinecraftSWP/commit/a8ba3934b8df76def69dffb725de7c3a9406859d))
+- **api:** auth ([abf8f41](https://github.com/13Aks13/MinecraftSWP/commit/abf8f411137b78848f5eb2940ee3d90b6c2bb7c5))
+- **api:** auth ([00bd9be](https://github.com/13Aks13/MinecraftSWP/commit/00bd9be391b464c11f7333e9ce4e497becda303d))
+- **infra:** release deploy ([cc592a1](https://github.com/13Aks13/MinecraftSWP/commit/cc592a1034c9de42d42f1a2673ed1f059c58aabc))
+- **infra:** release deploy ([cb93652](https://github.com/13Aks13/MinecraftSWP/commit/cb9365267dd10bffaacf745b19fbd003b3c8d5fe))
+
 # [1.19.0](https://github.com/13Aks13/MinecraftSWP/compare/1.18.0...1.19.0) (2026-10-26)
 
 ### Features
