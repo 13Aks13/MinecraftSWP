@@ -14,6 +14,10 @@ export default function SessionGate({ children }: { children: ReactNode }) {
   const clear = useAuthStore((state) => state.clear);
 
   useEffect(() => {
+    // Tokens used to be persisted here by older versions. They now live in an
+    // HttpOnly cookie, so remove any stale token left in localStorage.
+    localStorage.removeItem("mc-platform-auth");
+
     let active = true;
     me()
       .then((user) => {

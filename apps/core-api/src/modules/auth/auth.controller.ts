@@ -1,5 +1,5 @@
 import type { AuthUserDto, LoginResponseDto } from "@mc/shared";
-import { Body, Controller, Get, HttpCode, Inject, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, Header, HttpCode, Inject, Post, Req, Res } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
@@ -21,6 +21,7 @@ export class AuthController {
   @Public()
   @Post("login")
   @HttpCode(200)
+  @Header("Cache-Control", "no-store")
   @ApiOperation({ summary: "Exchange credentials for a JWT" })
   async login(
     @Body() dto: LoginDto,
@@ -41,12 +42,14 @@ export class AuthController {
   @Public()
   @Post("logout")
   @HttpCode(204)
+  @Header("Cache-Control", "no-store")
   @ApiOperation({ summary: "Clear the browser session cookie" })
   logout(@Req() request: Request, @Res({ passthrough: true }) response: Response): void {
     clearAccessTokenCookie(request, response, this.isProduction());
   }
 
   @Get("me")
+  @Header("Cache-Control", "no-store")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Current authenticated user" })
   me(@CurrentUser() user: AuthUser): AuthUserDto {
