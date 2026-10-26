@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag to deploy (e.g. 1.19.0)"
-        required: true
+        description: "Release tag to deploy (e.g. 1.19.0). Leave empty to deploy the latest published release."
+        required: false
         type: string
 
 permissions:
@@ -22,10 +22,29 @@ jobs:
     name: Deploy release to production
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve release tag
+        id: resolve-tag
+        run: |
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            echo "==> No tag specified, resolving latest release from GitHub API"
+            TAG=$(curl -fsS \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ github.token }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/latest" \
+              | sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p')
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::error::Could not resolve a release tag. Pass the 'tag' input or publish a release first."
+            exit 1
+          fi
+          echo "==> Will deploy release: $TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
-          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          RELEASE_TAG: ${{ steps.resolve-tag.outputs.tag }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -74,6 +93,14 @@ jobs:
             fi
 
             echo "==> Source is at $(git rev-parse --short HEAD) (${TAG})"
+
+            # .env is runtime configuration and must already exist on the server
+            # with production values. It is NOT part of the repository.
+            if [ ! -f .env ]; then
+              echo "==> ERROR: .env not found in $DEPLOY_DIR" >&2
+              echo "Create it manually (copy .env.example and set production values) before deploying." >&2
+              exit 1
+            fi
 
             # No `down` here: `up` recreates changed services and keeps postgres,
             # redis and the proxy running, so the outage window stays minimal.
