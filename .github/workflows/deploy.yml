@@ -3,19 +3,102 @@ name: Deploy to Production
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to deploy (e.g. 1.19.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    name: Deploy release to production
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: RELEASE_TAG
+          # Fail the job (and the release pipeline) as soon as one command fails,
+          # instead of silently rebuilding whatever stale sources are on disk.
+          script_stop: true
+          command_timeout: 30m
           script: |
-            cd /home/ubuntu/minecraft-swp
-            git pull origin main
-            docker compose -f infra/docker-compose.yml --env-file .env down
-            docker compose -f infra/docker-compose.yml --env-file .env up -d --build
+            set -euo pipefail
+
+            DEPLOY_DIR=/home/ubuntu/minecraft-swp
+            REPO_URL=https://github.com/13Aks13/MinecraftSWP.git
+            TAG="${RELEASE_TAG:?RELEASE_TAG is not set}"
+
+            echo "==> Deploying release ${TAG}"
+
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            # The directory was historically populated from release tarballs and has
+            # no .git. Bootstrap a work tree in place: runtime state (.env, infra/data,
+            # infra/storage, infra/letsencrypt) is untracked and therefore preserved.
+            if [ ! -d .git ]; then
+              echo "==> No git work tree found, initialising in place"
+              git init -q -b main
+            fi
+
+            if git remote get-url origin >/dev/null 2>&1; then
+              git remote set-url origin "$REPO_URL"
+            else
+              git remote add origin "$REPO_URL"
+            fi
+
+            echo "==> Fetching ${TAG}"
+            git fetch --prune --tags --force origin
+
+            echo "==> Checking out ${TAG}"
+            git -c advice.detachedHead=false checkout --force --detach "refs/tags/${TAG}"
+
+            if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+              echo "Working tree does not match ${TAG}:" >&2
+              git status --porcelain --untracked-files=no >&2
+              exit 1
+            fi
+
+            echo "==> Source is at $(git rev-parse --short HEAD) (${TAG})"
+
+            # No `down` here: `up` recreates changed services and keeps postgres,
+            # redis and the proxy running, so the outage window stays minimal.
+            docker compose -f infra/docker-compose.yml --env-file .env \
+              up -d --build --remove-orphans --wait --wait-timeout 1200
+
+            echo "==> Verifying the API through the proxy"
+            for attempt in $(seq 1 30); do
+              if curl -fsS --max-time 5 http://127.0.0.1/api/v1/health >/dev/null; then
+                echo "==> Health check passed"
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "Health check failed after 30 attempts" >&2
+                docker compose -f infra/docker-compose.yml --env-file .env ps >&2
+                exit 1
+              fi
+              sleep 5
+            done
+
+            echo "$TAG" > .deployed-version
+
+            # Rebuilt images leave the previous ones dangling; without this the disk
+            # fills up after a few releases.
+            docker image prune -f >/dev/null
+
+            docker compose -f infra/docker-compose.yml --env-file .env ps
+            echo "==> Release ${TAG} deployed"

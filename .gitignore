@@ -13,6 +13,11 @@ coverage/
 .env.*
 !.env.example
 
+# Let's Encrypt TLS state (contains private keys — must never be committed)
+infra/letsencrypt/*
+!infra/letsencrypt/.gitkeep
+/letsencrypt/
+
 # runtime data
 data/
 storage/*
