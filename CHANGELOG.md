@@ -1,3 +1,9 @@
+# [1.19.0](https://github.com/13Aks13/MinecraftSWP/compare/1.18.0...1.19.0) (2026-10-26)
+
+### Features
+
+- **api:** worker update ([69be32b](https://github.com/13Aks13/MinecraftSWP/commit/69be32be63e52d38bcbe5682225302a40be00ea4))
+
 # [1.18.0](https://github.com/13Aks13/MinecraftSWP/compare/1.17.0...1.18.0) (2026-10-26)
 
 ### Features
