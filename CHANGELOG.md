@@ -1,3 +1,9 @@
+# [1.23.0](https://github.com/13Aks13/MinecraftSWP/compare/1.22.0...1.23.0) (2026-10-26)
+
+### Features
+
+- **infra:** explicit error handling in deploy script for debugging ([3845226](https://github.com/13Aks13/MinecraftSWP/commit/38452260a2c9cd9e38b7048f6cd8053b07ae680a))
+
 # [1.22.0](https://github.com/13Aks13/MinecraftSWP/compare/1.21.0...1.22.0) (2026-10-26)
 
 ### Features
