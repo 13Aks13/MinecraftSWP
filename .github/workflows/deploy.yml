@@ -63,6 +63,11 @@ jobs:
 
             echo "==> Deploying release ${TAG}"
 
+            if ! command -v git >/dev/null 2>&1; then
+              echo "==> ERROR: git is not installed on the server" >&2
+              exit 1
+            fi
+
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
 
@@ -71,9 +76,10 @@ jobs:
             # infra/storage, infra/letsencrypt) is untracked and therefore preserved.
             if [ ! -d .git ]; then
               echo "==> No git work tree found, initialising in place"
-              git init -q -b main
+              git init -q
             fi
 
+            echo "==> Configuring remote origin"
             if git remote get-url origin >/dev/null 2>&1; then
               git remote set-url origin "$REPO_URL"
             else
@@ -104,6 +110,7 @@ jobs:
 
             # No `down` here: `up` recreates changed services and keeps postgres,
             # redis and the proxy running, so the outage window stays minimal.
+            echo "==> Running docker compose up"
             docker compose -f infra/docker-compose.yml --env-file .env \
               up -d --build --remove-orphans --wait --wait-timeout 1200
 
