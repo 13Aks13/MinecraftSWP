@@ -182,7 +182,7 @@ services:
     environment:
       EULA: "TRUE"
       LEVEL_NAME: "active"
-      TRANSPORT: "nethernet"
+      # TRANSPORT: "nethernet"
       ALLOW_OUTBOUND_SCRIPT_MODULES: "true"
       SERVER_UDP_PORTS: "19140-19155:19140-19155"
       UID: "1000"
