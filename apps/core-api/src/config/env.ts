@@ -25,6 +25,11 @@ export function validateEnv(env: RawEnv): RawEnv {
     throw new Error("JWT_SECRET must be changed before running in production");
   }
 
+  const expiresIn = env.JWT_EXPIRES_IN ?? "12h";
+  if (!/^\d+[smhd]$/.test(expiresIn)) {
+    throw new Error("JWT_EXPIRES_IN must be a duration such as 30m, 12h or 7d");
+  }
+
   const adminPassword = env.ADMIN_PASSWORD ?? "";
   if (nodeEnv === "production" && adminPassword && adminPassword.length < 12) {
     throw new Error("ADMIN_PASSWORD must be at least 12 characters in production");
@@ -35,7 +40,7 @@ export function validateEnv(env: RawEnv): RawEnv {
     NODE_ENV: nodeEnv,
     PORT: env.PORT ?? "3000",
     JWT_SECRET: secret,
-    JWT_EXPIRES_IN: env.JWT_EXPIRES_IN ?? "12h",
+    JWT_EXPIRES_IN: expiresIn,
     STORAGE_ROOT: env.STORAGE_ROOT ?? "./storage",
     DATA_ROOT: env.DATA_ROOT ?? "./data",
     BEDROCK_CONTAINER: env.BEDROCK_CONTAINER ?? "mc-bedrock",

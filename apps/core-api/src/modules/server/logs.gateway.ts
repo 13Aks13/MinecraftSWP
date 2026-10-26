@@ -1,13 +1,15 @@
 import { SOCKET_EVENTS } from "@mc/shared";
 import { Inject, Logger } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import {
   type OnGatewayConnection,
   type OnGatewayDisconnect,
   WebSocketGateway,
 } from "@nestjs/websockets";
 import type { Socket } from "socket.io";
-import type { JwtPayload } from "../auth/auth.types.js";
+import { ACCESS_TOKEN_COOKIE } from "../auth/auth.constants.js";
+import { readCookie } from "../auth/cookies.js";
+import { TokenService } from "../auth/token.service.js";
+import { UsersService } from "../users/users.service.js";
 import { ServerService } from "./server.service.js";
 
 interface LogSocketData {
@@ -22,7 +24,8 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(LogsGateway.name);
 
   constructor(
-    @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(TokenService) private readonly tokenService: TokenService,
+    @Inject(UsersService) private readonly usersService: UsersService,
     @Inject(ServerService) private readonly server: ServerService,
   ) {}
 
@@ -35,7 +38,11 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     try {
-      await this.jwtService.verifyAsync<JwtPayload>(token);
+      const payload = await this.tokenService.verifyAccessToken(token);
+      const user = await this.usersService.findById(payload.sub);
+      if (!user?.isActive) {
+        throw new Error("Inactive user");
+      }
     } catch {
       client.emit(SOCKET_EVENTS.logError, { message: "Invalid or expired token" });
       client.disconnect(true);
@@ -70,6 +77,12 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     const queryToken = client.handshake.query?.token;
-    return typeof queryToken === "string" ? queryToken : null;
+    if (typeof queryToken === "string" && queryToken.length > 0) {
+      return queryToken;
+    }
+
+    // Same-origin browser clients authenticate through the HttpOnly cookie,
+    // which is sent automatically with the websocket handshake.
+    return readCookie(client.handshake.headers.cookie, ACCESS_TOKEN_COOKIE);
   }
 }

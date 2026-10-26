@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import SessionGate from "./components/SessionGate";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -21,7 +22,9 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <SessionGate>
+        <App />
+      </SessionGate>
     </QueryClientProvider>
   </StrictMode>,
 );

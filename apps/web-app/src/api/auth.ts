@@ -10,3 +10,7 @@ export async function me(): Promise<AuthUserDto> {
   const { data } = await api.get<AuthUserDto>("/auth/me");
   return data;
 }
+
+export async function logout(): Promise<void> {
+  await api.post("/auth/logout");
+}

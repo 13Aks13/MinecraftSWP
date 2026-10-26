@@ -1,28 +1,25 @@
 import type { AuthUserDto } from "@mc/shared";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+
+export type AuthStatus = "loading" | "authenticated" | "anonymous";
 
 interface AuthState {
-  token: string | null;
   user: AuthUserDto | null;
-  setAuth: (token: string, user: AuthUserDto) => void;
-  logout: () => void;
+  status: AuthStatus;
+  setUser: (user: AuthUserDto) => void;
+  clear: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      token: null,
-      user: null,
-      setAuth: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
-    }),
-    {
-      name: "mc-platform-auth",
-      version: 2,
-    },
-  ),
-);
+/**
+ * The access token lives in an HttpOnly cookie and is never exposed to
+ * JavaScript. Only the public user profile is kept in memory.
+ */
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  status: "loading",
+  setUser: (user) => set({ user, status: "authenticated" }),
+  clear: () => set({ user: null, status: "anonymous" }),
+}));
 
 export function canWrite(role: AuthUserDto["role"] | undefined): boolean {
   return role === "admin" || role === "moderator";

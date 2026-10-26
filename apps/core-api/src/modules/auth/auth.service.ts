@@ -1,14 +1,14 @@
 import type { LoginResponseDto } from "@mc/shared";
 import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import { UsersService } from "../users/users.service.js";
 import type { LoginDto } from "./dto/login.dto.js";
+import { TokenService } from "./token.service.js";
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(UsersService) private readonly usersService: UsersService,
-    @Inject(JwtService) private readonly jwtService: JwtService,
+    @Inject(TokenService) private readonly tokenService: TokenService,
   ) {}
 
   async login(dto: LoginDto): Promise<LoginResponseDto> {
@@ -24,25 +24,16 @@ export class AuthService {
 
     await this.usersService.markLogin(user.id);
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const { accessToken, expiresIn } = await this.tokenService.issueAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
       accessToken,
-      expiresIn: this.expiresInSeconds(),
+      expiresIn,
       user: { id: user.id, email: user.email, role: user.role },
     };
-  }
-
-  private expiresInSeconds(): number {
-    const expiresIn = process.env.JWT_EXPIRES_IN ?? "12h";
-    const match = /^(\d+)([smhd])$/.exec(expiresIn);
-    if (!match) {
-      return 43_200;
-    }
-    const value = Number(match[1]);
-    const unit = match[2];
-    const multiplier = unit === "s" ? 1 : unit === "m" ? 60 : unit === "h" ? 3_600 : 86_400;
-    return value * multiplier;
   }
 }
