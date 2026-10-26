@@ -399,6 +399,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@mc/core-api':
+        specifier: workspace:*
+        version: link:../core-api
       '@mc/shared':
         specifier: workspace:*
         version: link:../../packages/shared
