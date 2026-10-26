@@ -13,12 +13,12 @@ interface LoginValues {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
-  const token = useAuthStore((state) => state.token);
+  const setUser = useAuthStore((state) => state.setUser);
+  const user = useAuthStore((state) => state.user);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (token) {
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
     setError(null);
     try {
       const response = await login(values.email, values.password);
-      setAuth(response.accessToken, response.user);
+      setUser(response.user);
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setError(errorMessage(requestError));

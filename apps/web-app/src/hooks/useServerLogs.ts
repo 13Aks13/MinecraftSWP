@@ -4,20 +4,20 @@ import { io } from "socket.io-client";
 import { useAuthStore } from "../store/auth";
 
 export function useServerLogs() {
-  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
   const [lines, setLines] = useState<LogLineDto[]>([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pausedRef = useRef(false);
 
   useEffect(() => {
-    if (!token) {
+    if (!user) {
       return undefined;
     }
 
     const socket = io("/logs", {
       path: "/socket.io",
-      auth: { token },
+      withCredentials: true,
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 1_000,
@@ -50,7 +50,7 @@ export function useServerLogs() {
       socket.removeAllListeners();
       socket.disconnect();
     };
-  }, [token]);
+  }, [user]);
 
   const setPaused = (paused: boolean) => {
     pausedRef.current = paused;

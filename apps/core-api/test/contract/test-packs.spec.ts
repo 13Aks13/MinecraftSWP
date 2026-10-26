@@ -1,6 +1,6 @@
 import { type INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import * as request from "supertest";
+import request from "supertest";
 import { AppModule } from "../../src/app.module.js";
 import { getAuthToken } from "./test-helpers.js";
 
@@ -24,7 +24,7 @@ describe("Packs (Contract)", () => {
 
   it("GET /api/packs returns paginated list", async () => {
     const res = await request(app.getHttpServer())
-      .get("/api/packs")
+      .get("/api/v1/packs")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     expect(res.body).toHaveProperty("items");
@@ -34,13 +34,13 @@ describe("Packs (Contract)", () => {
 
   it("GET /api/packs/:id returns a pack", async () => {
     const list = await request(app.getHttpServer())
-      .get("/api/packs")
+      .get("/api/v1/packs")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     if (list.body.items.length > 0) {
       const id = list.body.items[0].id;
       const res = await request(app.getHttpServer())
-        .get(`/api/packs/${id}`)
+        .get(`/api/v1/packs/${id}`)
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
       expect(res.body).toHaveProperty("id", id);
@@ -53,7 +53,7 @@ describe("Packs (Contract)", () => {
 
   it("DELETE /api/packs/:id returns deleted true", async () => {
     const list = await request(app.getHttpServer())
-      .get("/api/packs")
+      .get("/api/v1/packs")
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     if (list.body.items.length === 0) {
@@ -62,7 +62,7 @@ describe("Packs (Contract)", () => {
     }
     const id = list.body.items[0].id;
     const res = await request(app.getHttpServer())
-      .delete(`/api/packs/${id}`)
+      .delete(`/api/v1/packs/${id}`)
       .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
     expect(res.body).toHaveProperty("deleted", true);

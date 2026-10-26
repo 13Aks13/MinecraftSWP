@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Avatar, Badge, Button, Dropdown, Layout, Menu, Space, Tag, Typography } from "antd";
 import { useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { logout as logoutRequest } from "../api/auth";
 import { getHealth } from "../api/health";
 import { getServerStatus } from "../api/server";
 import { useAuthStore } from "../store/auth";
@@ -35,7 +36,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+  const clear = useAuthStore((state) => state.clear);
 
   const status = useQuery({
     queryKey: ["server-status"],
@@ -124,8 +125,12 @@ export default function AppLayout() {
                   icon: <LogoutOutlined />,
                   label: "Sign out",
                   onClick: () => {
-                    logout();
-                    navigate("/login");
+                    void logoutRequest()
+                      .catch(() => undefined)
+                      .finally(() => {
+                        clear();
+                        navigate("/login");
+                      });
                   },
                 },
               ],
