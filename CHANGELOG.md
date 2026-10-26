@@ -1,3 +1,9 @@
+# [1.24.0](https://github.com/13Aks13/MinecraftSWP/compare/1.23.0...1.24.0) (2026-10-26)
+
+### Features
+
+- **infra:** add shell trace to deploy script for debugging ([9507d1c](https://github.com/13Aks13/MinecraftSWP/commit/9507d1c56980ed7bf9244de02b535c1b2ca4a124))
+
 # [1.23.0](https://github.com/13Aks13/MinecraftSWP/compare/1.22.0...1.23.0) (2026-10-26)
 
 ### Features
