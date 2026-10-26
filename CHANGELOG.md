@@ -1,3 +1,12 @@
+# [1.25.0](https://github.com/13Aks13/MinecraftSWP/compare/1.24.1...1.25.0) (2026-10-26)
+
+### Features
+
+- **api:** modules server ([f829147](https://github.com/13Aks13/MinecraftSWP/commit/f8291478d85e69bb7be28ef0b728556967800ab1))
+- **infra:** update packages and node version ([6e47081](https://github.com/13Aks13/MinecraftSWP/commit/6e470814ec0f669668231a589de5b87e9c74f779))
+- **infra:** worker ([714d98c](https://github.com/13Aks13/MinecraftSWP/commit/714d98c1aa1a475d359a26e6de9997756ac443f2))
+- **infra:** worker packages update ([7a39c13](https://github.com/13Aks13/MinecraftSWP/commit/7a39c13f4b0aa89d5d97ea4df7423851e4f19468))
+
 ## [1.24.1](https://github.com/13Aks13/MinecraftSWP/compare/1.24.0...1.24.1) (2026-10-26)
 
 ### Bug Fixes
