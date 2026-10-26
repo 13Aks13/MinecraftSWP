@@ -55,7 +55,7 @@ jobs:
           script_stop: true
           command_timeout: 30m
           script: |
-            set -uo pipefail
+            set -ex
 
             DEPLOY_DIR=/home/ubuntu/minecraft-swp
             REPO_URL=https://github.com/13Aks13/MinecraftSWP.git
@@ -72,8 +72,8 @@ jobs:
             fi
             echo "==> Git version: $(git --version)"
 
-            mkdir -p "$DEPLOY_DIR" || { echo "==> ERROR: mkdir -p $DEPLOY_DIR failed" >&2; exit 1; }
-            cd "$DEPLOY_DIR" || { echo "==> ERROR: cannot cd to $DEPLOY_DIR" >&2; exit 1; }
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
             echo "==> Current directory: $(pwd)"
 
             # The directory was historically populated from release tarballs and has
@@ -81,7 +81,7 @@ jobs:
             # infra/storage, infra/letsencrypt) is untracked and therefore preserved.
             if [ ! -d .git ]; then
               echo "==> No git work tree found, initialising in place"
-              git init -q || { echo "==> ERROR: git init failed" >&2; exit 1; }
+              git init -q
               echo "==> Git initialized"
             else
               echo "==> Git work tree already exists"
@@ -90,16 +90,16 @@ jobs:
             # Configure remote origin (always reset to be safe)
             echo "==> Configuring remote origin to $REPO_URL"
             git remote remove origin 2>/dev/null || true
-            git remote add origin "$REPO_URL" || { echo "==> ERROR: git remote add failed" >&2; exit 1; }
+            git remote add origin "$REPO_URL"
             echo "==> Remote configured:"
-            git remote -v || { echo "==> ERROR: git remote -v failed" >&2; exit 1; }
+            git remote -v
 
             echo "==> Fetching ${TAG}"
-            git fetch --prune --tags --force origin || { echo "==> ERROR: git fetch failed" >&2; exit 1; }
+            git fetch --prune --tags --force origin
             echo "==> Fetch complete"
 
             echo "==> Checking out ${TAG}"
-            git -c advice.detachedHead=false checkout --force --detach "refs/tags/${TAG}" || { echo "==> ERROR: git checkout failed" >&2; exit 1; }
+            git -c advice.detachedHead=false checkout --force --detach "refs/tags/${TAG}"
             echo "==> Checkout complete"
 
             if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
@@ -123,7 +123,7 @@ jobs:
             # redis and the proxy running, so the outage window stays minimal.
             echo "==> Running docker compose up"
             docker compose -f infra/docker-compose.yml --env-file .env \
-              up -d --build --remove-orphans --wait --wait-timeout 1200 || { echo "==> ERROR: docker compose up failed" >&2; exit 1; }
+              up -d --build --remove-orphans --wait --wait-timeout 1200
 
             echo "==> Verifying the API through the proxy"
             for attempt in $(seq 1 30); do
