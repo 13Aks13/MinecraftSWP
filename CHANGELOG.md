@@ -1,3 +1,9 @@
+# [1.27.0](https://github.com/13Aks13/MinecraftSWP/compare/1.26.0...1.27.0) (2026-10-26)
+
+### Features
+
+- **api:** modules server ([4dadb8b](https://github.com/13Aks13/MinecraftSWP/commit/4dadb8b4f52535836b2de41a05854dfe1da37b10))
+
 # [1.26.0](https://github.com/13Aks13/MinecraftSWP/compare/1.25.0...1.26.0) (2026-10-26)
 
 ### Features
