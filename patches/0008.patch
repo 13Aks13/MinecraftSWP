@@ -1,0 +1,225 @@
+diff --git a/packages/shared/src/constants.ts b/packages/shared/src/constants.ts
+--- a/packages/shared/src/constants.ts
++++ b/packages/shared/src/constants.ts
+@@ -3,6 +3,9 @@ export const SOCKET_NAMESPACES = {
+   logs: "/logs",
+ } as const;
+
++/** Bundles larger than this are imported by the background worker (spec 002). */
++export const IMPORT_ASYNC_THRESHOLD_BYTES = 20 * 1024 * 1024;
++
+ export const SOCKET_EVENTS = {
+   logLine: "log.line",
+   logHistory: "log.history",
+diff --git a/apps/core-api/src/modules/packs/services/import-queue.service.ts b/apps/core-api/src/modules/packs/services/import-queue.service.ts
+--- a/apps/core-api/src/modules/packs/services/import-queue.service.ts
++++ b/apps/core-api/src/modules/packs/services/import-queue.service.ts
+@@ -1,19 +1,34 @@
+ import type { DuplicatePolicy } from "@mc/shared";
+-import { Injectable, Logger } from "@nestjs/common";
++import {
++  Injectable,
++  Logger,
++  type OnModuleDestroy,
++  ServiceUnavailableException,
++} from "@nestjs/common";
+ import { ConfigService } from "@nestjs/config";
+ import { Queue } from "bullmq";
+ import { Redis as IORedis } from "ioredis";
+
++const PING_TIMEOUT_MS = 2_000;
++
+ @Injectable()
+-export class ImportQueueService {
++export class ImportQueueService implements OnModuleDestroy {
+   private readonly logger = new Logger(ImportQueueService.name);
++  private readonly connection: IORedis;
+   readonly queue: Queue;
+
+   constructor(config: ConfigService) {
+-    const connection = new IORedis(config.get<string>("REDIS_URL", "redis://localhost:6379"), {
++    this.connection = new IORedis(config.get<string>("REDIS_URL", "redis://localhost:6379"), {
+       maxRetriesPerRequest: null,
+     });
+-    this.queue = new Queue("pack-import", { connection });
++    this.connection.on("error", (error) => this.logger.warn(`Redis error: ${error.message}`));
++    this.queue = new Queue("pack-import", { connection: this.connection });
++  }
++
++  async onModuleDestroy(): Promise<void> {
++    await this.queue.close();
++    this.connection.disconnect();
+   }
+
+   async enqueue(data: {
+@@ -25,4 +40,27 @@ export class ImportQueueService {
+     await this.queue.add("import", data, { attempts: 1, removeOnComplete: 100, removeOnFail: 100 });
+     this.logger.log(`Enqueued import job ${data.jobId}`);
+   }
++
++  /** Throws 503 quickly instead of leaving a job "queued" forever when Redis is down. */
++  async assertAvailable(): Promise<void> {
++    let timer: NodeJS.Timeout | undefined;
++    try {
++      await Promise.race([
++        this.connection.ping(),
++        new Promise<never>((_resolve, reject) => {
++          timer = setTimeout(() => reject(new Error("Redis ping timed out")), PING_TIMEOUT_MS);
++        }),
++      ]);
++    } catch (error) {
++      this.logger.error(`Import queue unavailable: ${(error as Error).message}`);
++      throw new ServiceUnavailableException(
++        "The import queue (Redis) is unavailable, so large bundles cannot be processed right now. Try again later.",
++      );
++    } finally {
++      clearTimeout(timer);
++    }
++  }
+ }
+diff --git a/apps/core-api/src/modules/packs/packs.controller.ts b/apps/core-api/src/modules/packs/packs.controller.ts
+--- a/apps/core-api/src/modules/packs/packs.controller.ts
++++ b/apps/core-api/src/modules/packs/packs.controller.ts
+@@ -1,5 +1,5 @@
+ import { createReadStream } from "node:fs";
+-import { stat } from "node:fs/promises";
++import { rm, stat } from "node:fs/promises";
+ import path from "node:path";
+@@ -137,22 +137,38 @@ export class PacksController {
+     if (!file) {
+       throw new BadRequestException('ZIP file is required in the "file" field');
+     }
+     const type = query.type;
+     const policy = query.onDuplicate ?? "replace";
++
++    // Fail fast, and do not leave the upload in temp/, when Redis is down.
++    try {
++      await this.importQueue.assertAvailable();
++    } catch (error) {
++      await rm(file.path, { force: true });
++      throw error;
++    }
++
+     const job = await this.importJobs.createJob({
+       bundleType: type,
+       duplicatePolicy: policy,
+       filePath: file.path,
+     });
+-    await this.importQueue.enqueue({ jobId: job.id, filePath: file.path, type, policy });
++    try {
++      await this.importQueue.enqueue({ jobId: job.id, filePath: file.path, type, policy });
++    } catch (error) {
++      await this.importJobs.fail(job.id, (error as Error).message);
++      await rm(file.path, { force: true });
++      throw error;
++    }
+     return { jobId: job.id, status: "queued" };
+   }
+
+   @Get("import/jobs/:id")
+   @Roles("admin", "moderator")
+-  async importJob(@Param("id") id: string): Promise<ImportJobDto> {
++  async importJob(@Param("id", ParseUUIDPipe) id: string): Promise<ImportJobDto> {
+     const job = await this.importJobs.getJob(id);
+     if (!job) {
+       throw new NotFoundException("Import job not found");
+diff --git a/apps/core-api/src/modules/packs/services/import-job.service.ts b/apps/core-api/src/modules/packs/services/import-job.service.ts
+--- a/apps/core-api/src/modules/packs/services/import-job.service.ts
++++ b/apps/core-api/src/modules/packs/services/import-job.service.ts
+@@ -1,13 +1,60 @@
++import { readdir, rm, stat } from "node:fs/promises";
++import path from "node:path";
+ import type { DuplicatePolicy, ImportJobDto, ImportReport, PackType } from "@mc/shared";
+-import { Injectable } from "@nestjs/common";
++import { Inject, Injectable, Logger, type OnModuleInit } from "@nestjs/common";
++import { ConfigService } from "@nestjs/config";
+ import { InjectRepository } from "@nestjs/typeorm";
+-import { type Repository } from "typeorm";
++import { In, LessThan, type Repository } from "typeorm";
++import { StorageService } from "../../../common/storage/storage.service.js";
+ import { ImportJobEntity } from "../entities/import-job.entity.js";
+
+ @Injectable()
+-export class ImportJobService {
++export class ImportJobService implements OnModuleInit {
++  private readonly logger = new Logger(ImportJobService.name);
++
+   constructor(
+     @InjectRepository(ImportJobEntity)
+     private readonly jobs: Repository<ImportJobEntity>,
++    @Inject(StorageService) private readonly storage: StorageService,
++    @Inject(ConfigService) private readonly config: ConfigService,
+   ) {}
+
++  /**
++   * Retention limit (IMPORT_TEMP_TTL_HOURS, default 24h): jobs that never finished are
++   * marked failed and orphaned uploads are removed from temp/uploads.
++   */
++  async onModuleInit(): Promise<void> {
++    const hours = Number(this.config.get<string>("IMPORT_TEMP_TTL_HOURS", "24"));
++    const ttlMs = (Number.isFinite(hours) && hours > 0 ? hours : 24) * 3_600_000;
++    const cutoff = new Date(Date.now() - ttlMs);
++
++    const expired = await this.jobs.update(
++      { status: In(["queued", "active"]), createdAt: LessThan(cutoff) },
++      {
++        status: "failed",
++        currentStep: "Expired",
++        error: "Import job expired before it was processed",
++        completedAt: new Date(),
++      },
++    );
++
++    const uploadsDir = this.storage.uploadsDir();
++    const entries = await readdir(uploadsDir, { withFileTypes: true }).catch(() => []);
++    let removed = 0;
++    for (const entry of entries) {
++      if (!entry.isFile()) {
++        continue;
++      }
++      const file = path.join(uploadsDir, entry.name);
++      const info = await stat(file).catch(() => null);
++      if (info && info.mtimeMs < cutoff.getTime()) {
++        await rm(file, { force: true });
++        removed += 1;
++      }
++    }
++    if ((expired.affected ?? 0) > 0 || removed > 0) {
++      this.logger.warn(`Expired ${expired.affected ?? 0} import job(s), removed ${removed} stale upload(s)`);
++    }
++  }
++
+   async createJob(input: {
+     bundleType: PackType;
+     duplicatePolicy: DuplicatePolicy;
+diff --git a/apps/web-app/src/pages/PacksPage.tsx b/apps/web-app/src/pages/PacksPage.tsx
+--- a/apps/web-app/src/pages/PacksPage.tsx
++++ b/apps/web-app/src/pages/PacksPage.tsx
+@@ -2,6 +2,7 @@ import { DeleteOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
+ import {
+   type DuplicatePolicy,
+   formatBytes,
++  IMPORT_ASYNC_THRESHOLD_BYTES,
+   type ImportReport,
+   PACK_TYPE_LABELS,
+   type PackDto,
+@@ -29,6 +30,7 @@ import {
+   deletePack,
+   deletePacks,
+   getImportJob,
++  importBundle,
+   importBundleAsync,
+   listPacks,
+   packIconUrl,
+@@ -69,7 +71,13 @@ export default function PacksPage() {
+   const upload = useMutation({
+     mutationFn: async (file: File) => {
+       setProgress(0);
++      // Small bundles keep the synchronous path (spec 002, US3).
++      if (file.size <= IMPORT_ASYNC_THRESHOLD_BYTES) {
++        setCurrentStep("Uploading and installing bundle…");
++        return importBundle(file, type, policy, setProgress);
++      }
+       setCurrentStep("Uploading bundle…");
+       const { jobId } = await importBundleAsync(file, type, policy);
+       let job = await getImportJob(jobId);

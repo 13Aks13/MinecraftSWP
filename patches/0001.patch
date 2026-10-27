@@ -1,0 +1,72 @@
+diff --git a/apps/core-api/src/modules/packs/packs.controller.ts b/apps/core-api/src/modules/packs/packs.controller.ts
+--- a/apps/core-api/src/modules/packs/packs.controller.ts
++++ b/apps/core-api/src/modules/packs/packs.controller.ts
+@@ -178,10 +178,12 @@ export class PacksController {
+     const opts = force === "true";
+     if (body?.ids?.length) {
+       return this.packs.removeMany(body.ids, opts);
+     }
+-    if (all === "true" || !body?.ids?.length) {
++    if (all === "true") {
+       return this.packs.removeAll(type, opts);
+     }
+-    return { deleted: 0 };
++    throw new BadRequestException(
++      'Refusing to delete: pass "ids" in the body or explicitly set all=true',
++    );
+   }
+ }
+diff --git a/apps/web-app/src/pages/PacksPage.tsx b/apps/web-app/src/pages/PacksPage.tsx
+--- a/apps/web-app/src/pages/PacksPage.tsx
++++ b/apps/web-app/src/pages/PacksPage.tsx
+@@ -296,16 +296,48 @@ export default function PacksPage() {
+         <Space style={{ marginBottom: 12 }}>
+           <Button
+             danger
+             disabled={selectedKeys.length === 0 || bulkDelete.isPending}
+-            onClick={() => bulkDelete.mutate(selectedKeys)}
++            onClick={() =>
++              modal.confirm({
++                title: `Delete ${selectedKeys.length} selected pack(s)?`,
++                content: "Pack files and registry entries are removed. Packs used by a world are skipped.",
++                okText: "Delete",
++                okButtonProps: { danger: true },
++                onOk: () => bulkDelete.mutateAsync(selectedKeys),
++              })
++            }
+           >
+             Delete selected ({selectedKeys.length})
+           </Button>
+-          <Button danger loading={deleteAll.isPending} onClick={() => deleteAll.mutate(type)}>
++          <Button
++            danger
++            loading={deleteAll.isPending}
++            onClick={() =>
++              modal.confirm({
++                title: `Delete ALL ${PACK_TYPE_LABELS[type].toLowerCase()}s?`,
++                content: "Every pack of this type that is not used by a world will be removed.",
++                okText: "Delete all",
++                okButtonProps: { danger: true },
++                onOk: () => deleteAll.mutateAsync(type),
++              })
++            }
++          >
+             Delete all in this tab
+           </Button>
+-          <Button danger loading={deleteAll.isPending} onClick={() => deleteAll.mutate(undefined)}>
++          <Button
++            danger
++            loading={deleteAll.isPending}
++            onClick={() =>
++              modal.confirm({
++                title: "Delete ALL packs?",
++                content: "The whole pack library (resource and behavior) will be removed.",
++                okText: "Delete everything",
++                okButtonProps: { danger: true },
++                onOk: () => deleteAll.mutateAsync(undefined),
++              })
++            }
++          >
+             Delete all packs
+           </Button>
+         </Space>

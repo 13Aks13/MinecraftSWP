@@ -1,0 +1,97 @@
+diff --git a/apps/core-api/src/modules/backups/backups.service.ts b/apps/core-api/src/modules/backups/backups.service.ts
+--- a/apps/core-api/src/modules/backups/backups.service.ts
++++ b/apps/core-api/src/modules/backups/backups.service.ts
+@@ -20,6 +20,13 @@ import { ServerService } from "../server/server.service.js";
+ import { WorldEntity } from "../worlds/entities/world.entity.js";
+ import { WorldsService } from "../worlds/worlds.service.js";
+ import { BackupEntity } from "./entities/backup.entity.js";
+
++const WORLD_MARKERS = new Set([
++  "level.dat",
++  "db",
++  "world_behavior_packs.json",
++  "world_resource_packs.json",
++]);
++
+ @Injectable()
+ export class BackupsService implements OnModuleInit {
+   private readonly logger = new Logger(BackupsService.name);
+@@ -198,11 +205,11 @@ export class BackupsService implements OnModuleInit {
+     try {
+       await mkdir(extractionDir, { recursive: true });
+       await extractTar({ file: archive, cwd: extractionDir, strict: true });
+-      await this.assertArchiveRoot(extractionDir);
++      const sourceRoot = await this.resolveArchiveRoot(extractionDir);
+
+       await rm(worldDir, { recursive: true, force: true });
+-      await cp(extractionDir, worldDir, { recursive: true, dereference: false });
++      await cp(sourceRoot, worldDir, { recursive: true, dereference: false });
+       await this.worlds.update({ id: world.id }, { sizeBytes: String(await dirSize(worldDir)) });
+
+       if (world.status === "active") {
+@@ -224,22 +231,34 @@ export class BackupsService implements OnModuleInit {
+     }
+   }
+
+-  private async assertArchiveRoot(dir: string): Promise<void> {
+-    const entries = await readdir(dir);
+-    if (
+-      entries.includes("level.dat") ||
+-      entries.includes("db") ||
+-      entries.includes("world_behavior_packs.json")
+-    ) {
+-      return;
+-    }
+-    const nested = await readdir(path.join(dir, entries[0] ?? ""), { withFileTypes: true }).catch(
+-      () => [],
+-    );
+-    if (nested.some((entry) => entry.name === "level.dat" || entry.name === "db")) {
+-      return;
+-    }
+-    throw new BadRequestException("Archive does not look like a Bedrock world");
+-  }
++  /**
++   * Returns the directory that actually holds the world files. Archives made by
++   * "Create backup" keep them at the root; an archive wrapped in a single folder is
++   * unwrapped. Archives with several worlds (backup of all worlds) are rejected
++   * because they cannot be restored into one world.
++   */
++  private async resolveArchiveRoot(dir: string): Promise<string> {
++    const entries = await readdir(dir, { withFileTypes: true });
++    if (entries.some((entry) => WORLD_MARKERS.has(entry.name))) {
++      return dir;
++    }
++
++    const folders = entries.filter((entry) => entry.isDirectory());
++    if (folders.length > 1) {
++      throw new BadRequestException(
++        "This archive contains several worlds (a backup of all worlds) and cannot be restored into a single world",
++      );
++    }
++    if (folders.length === 1 && entries.length === 1) {
++      const nestedDir = path.join(dir, folders[0].name);
++      const nested = await readdir(nestedDir);
++      if (nested.some((name) => WORLD_MARKERS.has(name))) {
++        return nestedDir;
++      }
++    }
++    throw new BadRequestException("Archive does not look like a Bedrock world");
++  }
+
+   async remove(id: string): Promise<void> {
+     const backup = await this.get(id);
+diff --git a/apps/web-app/src/pages/BackupsPage.tsx b/apps/web-app/src/pages/BackupsPage.tsx
+--- a/apps/web-app/src/pages/BackupsPage.tsx
++++ b/apps/web-app/src/pages/BackupsPage.tsx
+@@ -139,7 +139,10 @@ export default function BackupsPage() {
+               type="text"
+               icon={<RollbackOutlined />}
+               aria-label="Restore backup"
+-              disabled={backup.status !== "ready"}
++              disabled={
++                backup.status !== "ready" ||
++                (backup.worldId === null && backup.worldName === "All worlds")
++              }
+               onClick={() => setRestoreTarget(backup)}
+             />
+             <Button
