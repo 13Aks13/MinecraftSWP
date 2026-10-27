@@ -336,14 +336,47 @@ export default function PacksPage() {
           <Button
             danger
             disabled={selectedKeys.length === 0 || bulkDelete.isPending}
-            onClick={() => bulkDelete.mutate(selectedKeys)}
+            onClick={() =>
+              modal.confirm({
+                title: `Delete ${selectedKeys.length} selected pack(s)?`,
+                content:
+                  "Pack files and registry entries are removed. Packs used by a world are skipped.",
+                okText: "Delete",
+                okButtonProps: { danger: true },
+                onOk: () => bulkDelete.mutateAsync(selectedKeys),
+              })
+            }
           >
             Delete selected ({selectedKeys.length})
           </Button>
-          <Button danger loading={deleteAll.isPending} onClick={() => deleteAll.mutate(type)}>
+          <Button
+            danger
+            loading={deleteAll.isPending}
+            onClick={() =>
+              modal.confirm({
+                title: `Delete ALL ${PACK_TYPE_LABELS[type].toLowerCase()}s?`,
+                content: "Every pack of this type that is not used by a world will be removed.",
+                okText: "Delete all",
+                okButtonProps: { danger: true },
+                onOk: () => deleteAll.mutateAsync(type),
+              })
+            }
+          >
             Delete all in this tab
           </Button>
-          <Button danger loading={deleteAll.isPending} onClick={() => deleteAll.mutate(undefined)}>
+          <Button
+            danger
+            loading={deleteAll.isPending}
+            onClick={() =>
+              modal.confirm({
+                title: "Delete ALL packs?",
+                content: "The whole pack library (resource and behavior) will be removed.",
+                okText: "Delete everything",
+                okButtonProps: { danger: true },
+                onOk: () => deleteAll.mutateAsync(undefined),
+              })
+            }
+          >
             Delete all packs
           </Button>
         </Space>
