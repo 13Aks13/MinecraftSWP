@@ -1,5 +1,6 @@
 import { SOCKET_EVENTS } from "@mc/shared";
 import { Inject, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   type OnGatewayConnection,
   type OnGatewayDisconnect,
@@ -27,9 +28,17 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Inject(TokenService) private readonly tokenService: TokenService,
     @Inject(UsersService) private readonly usersService: UsersService,
     @Inject(ServerService) private readonly server: ServerService,
+    @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
   async handleConnection(client: Socket): Promise<void> {
+    if (!this.isOriginAllowed(client)) {
+      this.logger.warn(`Rejected /logs connection from origin ${client.handshake.headers.origin}`);
+      client.emit(SOCKET_EVENTS.logError, { message: "Origin not allowed" });
+      client.disconnect(true);
+      return;
+    }
+
     const token = this.extractToken(client);
     if (!token) {
       client.emit(SOCKET_EVENTS.logError, { message: "Authentication token is required" });
@@ -63,6 +72,31 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket): void {
     (client.data as LogSocketData).stopStream?.();
+  }
+
+  /** Blocks cross-site WebSocket hijacking: browsers always send Origin on a handshake. */
+  private isOriginAllowed(client: Socket): boolean {
+    const origin = client.handshake.headers.origin;
+    if (!origin) {
+      return true; // not a browser (curl, server-side client); still needs a valid token
+    }
+
+    let originHost: string;
+    try {
+      originHost = new URL(origin).host;
+    } catch {
+      return false;
+    }
+    if (originHost === client.handshake.headers.host) {
+      return true; // same-origin
+    }
+
+    const allowed = this.config
+      .get<string>("CORS_ORIGINS", "")
+      .split(",")
+      .map((item) => item.trim().replace(/\/$/, ""))
+      .filter(Boolean);
+    return allowed.includes(origin.replace(/\/$/, ""));
   }
 
   private extractToken(client: Socket): string | null {

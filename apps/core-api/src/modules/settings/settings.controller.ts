@@ -3,6 +3,7 @@ import { Body, Controller, Get, Inject, Post, Put } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Roles } from "../../common/decorators/roles.decorator.js";
 import { ServerService } from "../server/server.service.js";
+import { ServerPropertiesPipe } from "./pipes/server-properties.pipe.js";
 import { SettingsService } from "./settings.service.js";
 
 @ApiTags("settings")
@@ -22,7 +23,9 @@ export class SettingsController {
   @Put("server-properties")
   @Roles("admin", "moderator")
   @ApiOperation({ summary: "Update allow-listed server.properties values (restart required)" })
-  update(@Body() updates: Record<string, string>): Promise<ServerPropertyDto[]> {
+  update(
+    @Body(ServerPropertiesPipe) updates: Record<string, string>,
+  ): Promise<ServerPropertyDto[]> {
     return this.settings.update(updates);
   }
 
