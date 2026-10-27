@@ -5,6 +5,7 @@ import { UsersModule } from "../users/users.module.js";
 import { JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER } from "./auth.constants.js";
 import { AuthController } from "./auth.controller.js";
 import { AuthService } from "./auth.service.js";
+import { LoginThrottleService } from "./login-throttle.service.js";
 import { TokenService } from "./token.service.js";
 
 @Global()
@@ -32,7 +33,7 @@ import { TokenService } from "./token.service.js";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, TokenService],
+  providers: [AuthService, TokenService, LoginThrottleService],
   exports: [AuthService, TokenService],
 })
 export class AuthModule {}
