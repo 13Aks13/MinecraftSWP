@@ -1,3 +1,14 @@
+# [1.29.0](https://github.com/13Aks13/MinecraftSWP/compare/1.28.1...1.29.0) (2026-10-27)
+
+### Bug Fixes
+
+- **api:** security update ([a59a3a5](https://github.com/13Aks13/MinecraftSWP/commit/a59a3a547765f1ee589d24930a3b232ecdbbadcf))
+
+
+### Features
+
+- **api:** remove patches ([f21ba78](https://github.com/13Aks13/MinecraftSWP/commit/f21ba78e1ce519e7c1c47c27e1027010022c3ac8))
+
 ## [1.28.1](https://github.com/13Aks13/MinecraftSWP/compare/1.28.0...1.28.1) (2026-10-27)
 
 ### Bug Fixes
