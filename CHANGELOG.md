@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/13Aks13/MinecraftSWP/compare/1.28.0...1.28.1) (2026-10-27)
+
+### Bug Fixes
+
+- **api:** require explicit all=true to bulk-delete packs ([081847c](https://github.com/13Aks13/MinecraftSWP/commit/081847c166c64f06c63154701749fc008cce06a5))
+- **api:** require explicit all=true to bulk-delete packs ([76f82d3](https://github.com/13Aks13/MinecraftSWP/commit/76f82d30adeae0378af075ccc21973e8229e3435))
+
 # [1.28.0](https://github.com/13Aks13/MinecraftSWP/compare/1.27.0...1.28.0) (2026-10-26)
 
 ### Features
