@@ -1,0 +1,38 @@
+diff --git a/apps/core-api/src/main.ts b/apps/core-api/src/main.ts
+--- a/apps/core-api/src/main.ts
++++ b/apps/core-api/src/main.ts
+@@ -48,14 +48,14 @@ async function bootstrap(): Promise<void> {
+     swaggerOptions: { persistAuthorization: true },
+   });
+
+-  // Set to a generous but finite value, e.g., 5 minutes
+-  const FIVE_MINUTES = 5 * 60 * 1000;
++  // Keep every timeout finite so slow clients (slowloris) cannot hold sockets forever.
++  // requestTimeout bounds the whole request, so it must cover the slowest 500 MB upload.
++  const parsedTimeout = Number(config.get<string>("REQUEST_TIMEOUT_MS", "900000"));
++  const requestTimeoutMs =
++    Number.isFinite(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 900_000;
+   const server = app.getHttpServer();
+-  server.timeout = FIVE_MINUTES;
+-  server.requestTimeout = FIVE_MINUTES;
+-  server.headersTimeout = 60 * 1000;
+-  server.timeout = 0;
+-  server.requestTimeout = 0;
+-  server.headersTimeout = 0;
++  server.requestTimeout = requestTimeoutMs;
++  server.headersTimeout = 60_000;
+   await app.listen(port, "0.0.0.0");
+   // eslint-disable-next-line no-console
+   console.log(`core-api listening on http://0.0.0.0:${port} (docs: /api/docs)`);
+diff --git a/.env.example b/.env.example
+--- a/.env.example
++++ b/.env.example
+@@ -33,6 +33,8 @@ ADMIN_PASSWORD=ChangeMe123!
+ STORAGE_ROOT=./storage
+ DATA_ROOT=./data
+ MAX_UPLOAD_MB=500
++# Whole-request timeout in ms. Must exceed the slowest expected 500 MB upload.
++REQUEST_TIMEOUT_MS=900000
+
+ # ── Bedrock / Docker ──────────────────────────────────────────────────────────
+ BEDROCK_CONTAINER=mc-bedrock

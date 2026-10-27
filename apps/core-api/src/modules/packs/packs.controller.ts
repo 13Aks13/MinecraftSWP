@@ -169,9 +169,11 @@ export class PacksController {
     if (body?.ids?.length) {
       return this.packs.removeMany(body.ids, opts);
     }
-    if (all === "true" || !body?.ids?.length) {
+    if (all === "true") {
       return this.packs.removeAll(type, opts);
     }
-    return { deleted: 0 };
+    throw new BadRequestException(
+      'Refusing to delete: pass "ids" in the body or explicitly set all=true',
+    );
   }
 }
