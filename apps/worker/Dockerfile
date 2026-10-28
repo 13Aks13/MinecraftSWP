@@ -28,7 +28,13 @@ RUN pnpm --filter @mc/shared build \
  && rm -rf /out/src /out/tsconfig*.json /out/*.tsbuildinfo /out/Dockerfile
 
 FROM node:26.12.1-alpine AS runner
+# Run imports as the same unprivileged uid as core-api and Bedrock. Running as
+# root would create root-owned packs that neither container can replace later.
+RUN apk add --no-cache gosu
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /out ./
+COPY --chown=node:node apps/core-api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/apps/worker/src/main.js"]

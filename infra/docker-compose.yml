@@ -100,10 +100,10 @@ services:
     image: tecnativa/docker-socket-proxy:latest
     container_name: mc-docker-proxy
     environment:
-      # Only what DockerService uses: inspect/stats/logs, exec (send-command), start/stop.
+      # Only what DockerService uses: inspect/stats/logs, attach (console stdin), start/stop.
+      # EXEC is intentionally off: core-api cannot run commands inside containers.
       CONTAINERS: 1
       POST: 1
-      EXEC: 1
       ALLOW_START: 1
       ALLOW_STOP: 1
       ALLOW_RESTARTS: 1
@@ -132,6 +132,7 @@ services:
       BEDROCK_CONTAINER: mc-bedrock
       BEDROCK_LEVEL_NAME: active
       DOCKER_HOST: tcp://docker-proxy:2375
+      BEDROCK_COMMAND_MODE: attach
     volumes:
       - ./storage:/storage
       - ./data:/data
