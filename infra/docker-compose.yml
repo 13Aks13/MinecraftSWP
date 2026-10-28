@@ -145,6 +145,7 @@ services:
       redis:
         condition: service_healthy
       docker-proxy:
+        condition: service_started
     healthcheck:
       test:
         - CMD
