@@ -1,3 +1,18 @@
+# [1.30.0](https://github.com/13Aks13/MinecraftSWP/compare/1.29.0...1.30.0) (2026-10-28)
+
+### Bug Fixes
+
+- **api:** typecheck issue ([fca08c0](https://github.com/13Aks13/MinecraftSWP/commit/fca08c0dae127246a44fabac7eaf8fdfbc8e206c))
+- **docker:** route core-api Docker access through docker-socket-proxy ([17984ad](https://github.com/13Aks13/MinecraftSWP/commit/17984adbf9beb8833f6fb1116e68a84ff3daa087))
+- **infra:** give traefik a read-only docker-socket-proxy instead of the raw socket ([310690a](https://github.com/13Aks13/MinecraftSWP/commit/310690ae21dc0a2452a3595a4d3540f6ef1cd1d5))
+
+
+### Features
+
+- **api:** revoke sessions on password change via tokenVersion ([bfc12e0](https://github.com/13Aks13/MinecraftSWP/commit/bfc12e049886a3b3f227b7011f391be1e4fe0f66))
+- **api:** support DOCKER_HOST so the Docker API can be reached through a socket proxy ([4510288](https://github.com/13Aks13/MinecraftSWP/commit/4510288bc1fa21972e308fa70b1275652ab4adbf))
+- **web:** add change-password dialog to the user menu ([f2b863d](https://github.com/13Aks13/MinecraftSWP/commit/f2b863d327607bdec294b52181e9fc10e0cafea5))
+
 # [1.29.0](https://github.com/13Aks13/MinecraftSWP/compare/1.28.1...1.29.0) (2026-10-27)
 
 ### Bug Fixes
