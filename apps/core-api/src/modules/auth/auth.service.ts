@@ -26,11 +26,14 @@ export class AuthService {
 
     await this.usersService.markLogin(user.id);
 
-    const { accessToken, expiresIn } = await this.tokenService.issueAccessToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const { accessToken, expiresIn } = await this.tokenService.issueAccessToken(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      user.tokenVersion,
+    );
 
     return {
       accessToken,
@@ -39,7 +42,7 @@ export class AuthService {
     };
   }
 
-  async changePassword(user: AuthUser, dto: ChangePasswordDto): Promise<void> {
+  async changePassword(user: AuthUser, dto: ChangePasswordDto): Promise<LoginResponseDto> {
     const account = await this.usersService.findByIdWithPassword(user.id);
     if (!account?.isActive) {
       throw new UnauthorizedException("Account is no longer active");
@@ -51,5 +54,27 @@ export class AuthService {
     }
 
     await this.usersService.setPassword(user.id, dto.newPassword);
+
+    // setPassword bumps tokenVersion, so the current token is now stale.
+    // Issue a fresh one for this session; every other session stays revoked.
+    const updated = await this.usersService.findById(user.id);
+    if (!updated?.isActive) {
+      throw new UnauthorizedException("Account is no longer active");
+    }
+
+    const { accessToken, expiresIn } = await this.tokenService.issueAccessToken(
+      {
+        id: updated.id,
+        email: updated.email,
+        role: updated.role,
+      },
+      updated.tokenVersion,
+    );
+
+    return {
+      accessToken,
+      expiresIn,
+      user: { id: updated.id, email: updated.email, role: updated.role },
+    };
   }
 }

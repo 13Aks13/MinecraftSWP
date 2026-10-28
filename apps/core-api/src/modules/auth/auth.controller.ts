@@ -76,15 +76,25 @@ export class AuthController {
   }
 
   @Post("change-password")
-  @HttpCode(204)
+  @HttpCode(200)
   @Header("Cache-Control", "no-store")
   @ApiBearerAuth()
   @ApiOperation({ summary: "Change the password of the current user" })
   async changePassword(
     @CurrentUser() user: AuthUser,
     @Body() dto: ChangePasswordDto,
-  ): Promise<void> {
-    await this.authService.changePassword(user, dto);
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LoginResponseDto> {
+    const session = await this.authService.changePassword(user, dto);
+    setAccessTokenCookie(
+      request,
+      response,
+      session.accessToken,
+      session.expiresIn,
+      this.isProduction(),
+    );
+    return session;
   }
 
   @Get("me")
