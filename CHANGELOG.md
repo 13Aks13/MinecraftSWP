@@ -1,3 +1,9 @@
+# [1.32.0](https://github.com/13Aks13/MinecraftSWP/compare/1.31.0...1.32.0) (2026-10-28)
+
+### Features
+
+- **infra:** deploy update ([fdf537d](https://github.com/13Aks13/MinecraftSWP/commit/fdf537dcd06a229a0f08657e299e1311760f2d2c))
+
 # [1.31.0](https://github.com/13Aks13/MinecraftSWP/compare/1.30.0...1.31.0) (2026-10-28)
 
 ### Features
