@@ -15,6 +15,13 @@ export async function logout(): Promise<void> {
   await api.post("/auth/logout");
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  await api.post("/auth/change-password", { currentPassword, newPassword });
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<LoginResponseDto> {
+  const { data } = await api.post<LoginResponseDto>("/auth/change-password", {
+    currentPassword,
+    newPassword,
+  });
+  return data;
 }

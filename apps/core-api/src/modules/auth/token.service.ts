@@ -18,11 +18,15 @@ export class TokenService {
     @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
-  async issueAccessToken(user: AuthUser): Promise<{ accessToken: string; expiresIn: number }> {
+  async issueAccessToken(
+    user: AuthUser,
+    tokenVersion: number,
+  ): Promise<{ accessToken: string; expiresIn: number }> {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+      tv: tokenVersion,
     };
     const accessToken = await this.jwtService.signAsync(payload);
     return { accessToken, expiresIn: this.expiresInSeconds };

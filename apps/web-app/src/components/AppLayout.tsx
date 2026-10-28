@@ -4,6 +4,7 @@ import {
   CloudServerOutlined,
   DashboardOutlined,
   DatabaseOutlined,
+  KeyOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -18,6 +19,7 @@ import { logout as logoutRequest } from "../api/auth";
 import { getHealth } from "../api/health";
 import { getServerStatus } from "../api/server";
 import { useAuthStore } from "../store/auth";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 const { Header, Sider, Content } = Layout;
 
@@ -33,6 +35,7 @@ const NAV_ITEMS = [
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
@@ -121,6 +124,12 @@ export default function AppLayout() {
             menu={{
               items: [
                 {
+                  key: "change-password",
+                  icon: <KeyOutlined />,
+                  label: "Change password",
+                  onClick: () => setPasswordOpen(true),
+                },
+                {
                   key: "logout",
                   icon: <LogoutOutlined />,
                   label: "Sign out",
@@ -149,6 +158,7 @@ export default function AppLayout() {
           <Outlet />
         </Content>
       </Layout>
+      <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
     </Layout>
   );
 }

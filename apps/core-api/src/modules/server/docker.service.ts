@@ -4,6 +4,7 @@ import type { LogLineDto, ServerStatsDto, ServerStatusDto } from "@mc/shared";
 import { Inject, Injectable, Logger, type OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Docker from "dockerode";
+import { buildDockerOptions } from "./docker.options.js";
 
 const CONTAINER_NOT_FOUND = 404;
 const LOG_LINE_RE = /^(\d{4}-\d{2}-\d{2}T[^\s]+)\s(.*)$/;
@@ -19,7 +20,7 @@ export class DockerService implements OnModuleDestroy {
   constructor(@Inject(ConfigService) readonly config: ConfigService) {
     this.containerName = config.get<string>("BEDROCK_CONTAINER", "mc-bedrock");
     const socketPath = config.get<string>("DOCKER_SOCKET", "/var/run/docker.sock");
-    this.docker = new Docker({ socketPath });
+    this.docker = new Docker(buildDockerOptions(config.get<string>("DOCKER_HOST"), socketPath));
   }
 
   async onModuleDestroy(): Promise<void> {

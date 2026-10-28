@@ -9,6 +9,7 @@ import { WorldPackEntity } from "../modules/worlds/entities/world-pack.entity.js
 import { InitialSchema1760000000000 } from "./migrations/1760000000000-InitialSchema.js";
 import { AddImportJobsTable1760000000001 } from "./migrations/1760000000001-AddImportJobsTable.js";
 import { FixImportJobsStatusConstraint1760000000002 } from "./migrations/1760000000002-FixImportJobsStatusConstraint.js";
+import { AddUserTokenVersion1760000000003 } from "./migrations/1760000000003-AddUserTokenVersion.js";
 
 export const ENTITIES = [
   UserEntity,
@@ -35,6 +36,7 @@ export function buildDataSourceOptions(
       InitialSchema1760000000000,
       AddImportJobsTable1760000000001,
       FixImportJobsStatusConstraint1760000000002,
+      AddUserTokenVersion1760000000003,
     ],
     migrationsRun: false,
     synchronize: false,
