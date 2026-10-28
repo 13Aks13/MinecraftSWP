@@ -24,6 +24,10 @@ export class UserEntity {
   @Column({ name: "is_active", type: "boolean", default: true })
   isActive!: boolean;
 
+  /** Bumped on every password change; tokens carrying an older value are rejected. */
+  @Column({ name: "token_version", type: "int", default: 0 })
+  tokenVersion!: number;
+
   @Column({ name: "last_login_at", type: "timestamptz", nullable: true })
   lastLoginAt!: Date | null;
 
