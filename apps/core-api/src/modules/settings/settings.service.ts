@@ -190,7 +190,13 @@ export class SettingsService implements OnModuleInit {
       if (index <= 0) {
         continue;
       }
-      values[trimmed.slice(0, index).trim()] = trimmed.slice(index + 1);
+      const key = trimmed.slice(0, index).trim();
+      // BDS accepts several server-udp-ports mappings (one per line). They are
+      // preserved verbatim by persist() instead of being collapsed into one value.
+      if (key === "server-udp-ports") {
+        continue;
+      }
+      values[key] = trimmed.slice(index + 1);
     }
     return values;
   }
@@ -203,6 +209,7 @@ export class SettingsService implements OnModuleInit {
 
   private async persist(): Promise<void> {
     const onDisk = await this.read();
+    const udpPortLines = await this.readUdpPortLines();
     this.cache = {
       ...onDisk,
       ...this.cache,
@@ -211,10 +218,29 @@ export class SettingsService implements OnModuleInit {
     const lines = [
       "# Managed by the Minecraft Platform API. Manual edits may be overwritten.",
       ...Object.keys(this.cache)
+        .filter((key) => key !== "server-udp-ports")
         .sort()
         .map((key) => `${key}=${this.cache[key]}`),
+      ...udpPortLines,
     ];
     await writeFile(this.storage.serverPropertiesPath(), `${lines.join("\n")}\n`, "utf8");
     this.logger.log(`Updated ${this.storage.serverPropertiesPath()}`);
+  }
+
+  /**
+   * NetherNet needs one UDP port per player. Keep every mapping line as-is so a
+   * settings update cannot collapse them into the broken range/comma syntax
+   * (BDS-23126) and break existing clients.
+   */
+  private async readUdpPortLines(): Promise<string[]> {
+    const file = this.storage.serverPropertiesPath();
+    if (!(await pathExists(file))) {
+      return [];
+    }
+    const text = await readFile(file, "utf8");
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("server-udp-ports="));
   }
 }

@@ -7,11 +7,10 @@ import {
   WebSocketGateway,
 } from "@nestjs/websockets";
 import type { Socket } from "socket.io";
-import { ACCESS_TOKEN_COOKIE } from "../auth/auth.constants.js";
-import { readCookie } from "../auth/cookies.js";
 import { TokenService } from "../auth/token.service.js";
 import { UsersService } from "../users/users.service.js";
 import { ServerService } from "./server.service.js";
+import { extractSocketToken } from "./socket-token.js";
 
 interface LogSocketData {
   stopStream?: () => void;
@@ -100,23 +99,6 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private extractToken(client: Socket): string | null {
-    const authToken = client.handshake.auth?.token;
-    if (typeof authToken === "string" && authToken.length > 0) {
-      return authToken;
-    }
-
-    const header = client.handshake.headers.authorization;
-    if (typeof header === "string" && header.startsWith("Bearer ")) {
-      return header.slice("Bearer ".length);
-    }
-
-    const queryToken = client.handshake.query?.token;
-    if (typeof queryToken === "string" && queryToken.length > 0) {
-      return queryToken;
-    }
-
-    // Same-origin browser clients authenticate through the HttpOnly cookie,
-    // which is sent automatically with the websocket handshake.
-    return readCookie(client.handshake.headers.cookie, ACCESS_TOKEN_COOKIE);
+    return extractSocketToken(client.handshake);
   }
 }

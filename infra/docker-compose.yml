@@ -226,18 +226,22 @@ services:
       LEVEL_NAME: "active"
       # Bedrock 1.26.60+ only supports NetherNet; RakNet clients can no longer join.
       TRANSPORT: "nethernet"
-      # NetherNet signals over TCP on server-port and carries gameplay over this
-      # UDP range. Keep it in sync with the published ports below.
-      SERVER_UDP_PORTS: "19140-19155:19140-19155"
+      # Optional override. When empty, the entrypoint resolves the public IPv4
+      # via ifconfig.me so clients do not receive the Docker bridge address.
+      BEDROCK_PUBLIC_IP: "${BEDROCK_PUBLIC_IP:-}"
       ALLOW_OUTBOUND_SCRIPT_MODULES: "true"
       UID: "1000"
       GID: "1000"
+    # BDS 1.26.x cannot parse range server-udp-ports mappings (BDS-23126).
+    # This wrapper writes one single-port mapping per player before BDS starts.
+    entrypoint: ["/bin/bash", "/opt/nether-udp-entrypoint.sh"]
     ports:
-      # TCP signaling on server-port; UDP media on the SERVER_UDP_PORTS range.
+      # TCP signaling on server-port; one UDP port per player on this range.
       - "19132:19132"
       - "19140-19155:19140-19155/udp"
     volumes:
       - ./data:/data
+      - ./bedrock-nethernet-entrypoint.sh:/opt/nether-udp-entrypoint.sh:ro
     networks:
       - backend
     stdin_open: true

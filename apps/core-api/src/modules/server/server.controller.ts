@@ -1,10 +1,4 @@
-import type {
-  AllowListDto,
-  AllowListEntry,
-  DashboardDto,
-  ServerStatsDto,
-  ServerStatusDto,
-} from "@mc/shared";
+import type { AllowListDto, DashboardDto, ServerStatsDto, ServerStatusDto } from "@mc/shared";
 import {
   Body,
   Controller,
@@ -20,7 +14,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Roles } from "../../common/decorators/roles.decorator.js";
 import { AllowlistService } from "./allowlist.service.js";
-import { AllowListNameParamDto } from "./dto/allowlist.dto.js";
+import { AllowListEntryDto, AllowListNameParamDto } from "./dto/allowlist.dto.js";
 import { LogsQueryDto } from "./dto/logs-query.dto.js";
 import { SendCommandDto } from "./dto/send-command.dto.js";
 import { ServerService } from "./server.service.js";
@@ -93,7 +87,7 @@ export class ServerController {
   @Post("allowlist")
   @Roles("admin", "moderator")
   @ApiOperation({ summary: "Add a player to the allowlist" })
-  async addToAllowlist(@Body() entry: AllowListEntry): Promise<AllowListDto> {
+  async addToAllowlist(@Body() entry: AllowListEntryDto): Promise<AllowListDto> {
     return this.allowlist.addEntry(entry);
   }
 
