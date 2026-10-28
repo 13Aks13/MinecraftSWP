@@ -1,5 +1,5 @@
 import { PACK_TYPES, type PackType } from "@mc/shared";
-import { IsEnum, IsIn, IsOptional } from "class-validator";
+import { IsArray, IsEnum, IsIn, IsOptional, IsUUID } from "class-validator";
 
 const FLAG_VALUES = ["true", "false"];
 
@@ -17,4 +17,11 @@ export class DeletePacksQueryDto extends ForceQueryDto {
   @IsOptional()
   @IsIn(FLAG_VALUES, { message: 'all must be "true" or "false"' })
   all?: string;
+}
+
+export class DeletePacksBodyDto {
+  @IsOptional()
+  @IsArray()
+  @IsUUID("4", { each: true })
+  ids?: string[];
 }

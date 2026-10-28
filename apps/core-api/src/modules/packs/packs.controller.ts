@@ -23,7 +23,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagg
 import { Public } from "../../common/decorators/public.decorator.js";
 import { Roles } from "../../common/decorators/roles.decorator.js";
 import { StorageService } from "../../common/storage/storage.service.js";
-import { DeletePacksQueryDto } from "./dto/delete-query.dto.js";
+import { DeletePacksBodyDto, DeletePacksQueryDto } from "./dto/delete-query.dto.js";
 import { BundleQueryDto, ImportQueryDto } from "./dto/import-bundle.dto.js";
 import { ListPacksQueryDto } from "./dto/list-packs.dto.js";
 import { PacksService } from "./packs.service.js";
@@ -161,7 +161,7 @@ export class PacksController {
   @Delete()
   @Roles("admin", "moderator")
   async removeMany(
-    @Body() body: { ids?: string[] },
+    @Body() body: DeletePacksBodyDto,
     @Query() query: DeletePacksQueryDto,
   ): Promise<{ deleted: number }> {
     const opts = query.force === "true";
