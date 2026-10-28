@@ -4,6 +4,7 @@ import type { LogLineDto, ServerStatsDto, ServerStatusDto } from "@mc/shared";
 import { Inject, Injectable, Logger, type OnModuleDestroy } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Docker from "dockerode";
+import { normalizeConsoleCommand } from "./console-command.js";
 import { buildDockerOptions } from "./docker.options.js";
 
 const CONTAINER_NOT_FOUND = 404;
@@ -16,11 +17,15 @@ export class DockerService implements OnModuleDestroy {
   private readonly logger = new Logger(DockerService.name);
   private readonly docker: Docker;
   readonly containerName: string;
+  /** "exec" runs `send-command` inside the container; "attach" writes to its stdin (no EXEC permission needed). */
+  private readonly commandMode: "exec" | "attach";
 
   constructor(@Inject(ConfigService) readonly config: ConfigService) {
     this.containerName = config.get<string>("BEDROCK_CONTAINER", "mc-bedrock");
     const socketPath = config.get<string>("DOCKER_SOCKET", "/var/run/docker.sock");
     this.docker = new Docker(buildDockerOptions(config.get<string>("DOCKER_HOST"), socketPath));
+    this.commandMode =
+      config.get<string>("BEDROCK_COMMAND_MODE", "exec") === "attach" ? "attach" : "exec";
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -158,8 +163,37 @@ export class DockerService implements OnModuleDestroy {
   }
 
   async sendCommand(command: string): Promise<string> {
-    const output = await this.exec(["send-command", command]);
+    const line = normalizeConsoleCommand(command);
+    if (this.commandMode === "attach") {
+      await this.writeToStdin(line);
+      // The server prints the result to its console, so read it in the live logs.
+      return "";
+    }
+    const output = await this.exec(["send-command", line]);
     return output.stdout;
+  }
+
+  /**
+   * Writes one line to the container's stdin. Requires `stdin_open: true` on the container
+   * (already set in docker-compose.yml) and only the plain container attach API.
+   */
+  private async writeToStdin(line: string): Promise<void> {
+    const stream = (await this.container().attach({
+      stream: true,
+      stdin: true,
+      stdout: false,
+      stderr: false,
+      hijack: true,
+    })) as NodeJS.ReadWriteStream & { destroy?: () => void };
+    try {
+      await new Promise<void>((resolve, reject) => {
+        stream.once("error", reject);
+        stream.write(`${line}\n`, (error?: Error | null) => (error ? reject(error) : resolve()));
+      });
+    } finally {
+      // The container keeps running: only our side of the hijacked connection is closed.
+      stream.destroy?.();
+    }
   }
 
   private async exec(command: string[]): Promise<{ stdout: string; stderr: string }> {
