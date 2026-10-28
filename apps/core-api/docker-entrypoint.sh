@@ -5,10 +5,31 @@ set -eu
 # platform directories writable for the unprivileged application user (uid
 # 1000, matching the itzg Bedrock image) before dropping privileges.
 if [ "$(id -u)" = "0" ]; then
-  mkdir -p /storage /data/worlds
+  mkdir -p /storage /data/worlds /data/behavior_packs /data/resource_packs
   chown -R node:node /storage 2>/dev/null || true
-  chown node:node /data /data/worlds 2>/dev/null || true
-  chown -R node:node /data/worlds 2>/dev/null || true
+  chmod -R u+rwX /storage 2>/dev/null || true
+  chown node:node /data 2>/dev/null || true
+  chmod u+rwx /data 2>/dev/null || true
+
+  # The Bedrock container also runs as uid 1000 and replaces/deletes packs when
+  # it upgrades. Data restored from another host can be owned by a different
+  # uid, which makes that upgrade fail with "Permission denied". Normalize the
+  # directories Bedrock has to write to before dropping privileges.
+  for dir in /data/worlds /data/behavior_packs /data/resource_packs; do
+    if [ -d "$dir" ]; then
+      chown -R node:node "$dir" 2>/dev/null || true
+      chmod -R u+rwX "$dir" 2>/dev/null || true
+    fi
+  done
+
+  # Old upgrade backups are pruned by Bedrock on the next upgrade.
+  for dir in /data/backup-pre-*; do
+    if [ -d "$dir" ] && [ "$(stat -c '%u' "$dir")" != "1000" ]; then
+      chown -R node:node "$dir" 2>/dev/null || true
+      chmod -R u+rwX "$dir" 2>/dev/null || true
+    fi
+  done
+
   find /data -maxdepth 1 -type f -exec chown node:node {} + 2>/dev/null || true
 fi
 
