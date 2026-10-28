@@ -15,10 +15,10 @@ import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { c as createTar, x as extractTar } from "tar";
 import type { Repository } from "typeorm";
+import type { PaginationQueryDto } from "../../common/dto/pagination-query.dto.js";
 import { StorageService } from "../../common/storage/storage.service.js";
 import { dirSize, pathExists } from "../../common/utils/fs.utils.js";
 import { envFlag } from "../../config/env.js";
-import type { ListPacksQueryDto } from "../packs/dto/list-packs.dto.js";
 import { ServerService } from "../server/server.service.js";
 import { WorldEntity } from "../worlds/entities/world.entity.js";
 import { WorldsService } from "../worlds/worlds.service.js";
@@ -56,7 +56,7 @@ export class BackupsService implements OnModuleInit {
     }
   }
 
-  async list(query: ListPacksQueryDto): Promise<Paginated<BackupDto>> {
+  async list(query: PaginationQueryDto): Promise<Paginated<BackupDto>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 50;
     const [items, total] = await this.backups.findAndCount({

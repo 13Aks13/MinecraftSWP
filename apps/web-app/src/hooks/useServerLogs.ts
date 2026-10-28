@@ -56,5 +56,18 @@ export function useServerLogs() {
     pausedRef.current = paused;
   };
 
-  return { lines, connected, error, setPaused, clear: () => setLines([]) };
+  /** Add a client-side line (e.g. an echoed console command/result). */
+  const pushSystem = (message: string) => {
+    const line: LogLineDto = {
+      stream: "system",
+      message,
+      timestamp: new Date().toISOString(),
+    };
+    setLines((current) => {
+      const next = [...current, line];
+      return next.length > 3_000 ? next.slice(next.length - 3_000) : next;
+    });
+  };
+
+  return { lines, connected, error, setPaused, clear: () => setLines([]), pushSystem };
 }

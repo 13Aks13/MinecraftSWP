@@ -20,6 +20,9 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Roles } from "../../common/decorators/roles.decorator.js";
 import { AllowlistService } from "./allowlist.service.js";
+import { AllowListNameParamDto } from "./dto/allowlist.dto.js";
+import { LogsQueryDto } from "./dto/logs-query.dto.js";
+import { SendCommandDto } from "./dto/send-command.dto.js";
 import { ServerService } from "./server.service.js";
 
 @ApiTags("server")
@@ -70,17 +73,14 @@ export class ServerController {
   @Post("command")
   @Roles("admin", "moderator")
   @ApiOperation({ summary: "Send a command to the Bedrock console" })
-  command(@Body("command") command: string): Promise<{ output: string }> {
-    return this.server.sendCommand(command).then((output) => ({ output }));
+  command(@Body() dto: SendCommandDto): Promise<{ output: string }> {
+    return this.server.sendCommand(dto.command).then((output) => ({ output }));
   }
 
   @Get("logs")
   @Header("Content-Type", "text/plain; charset=utf-8")
-  async logs(@Query("tail") tail?: string): Promise<string> {
-    const parsed = Number(tail ?? 500);
-    return this.server.logsText(
-      Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 10_000) : 500,
-    );
+  async logs(@Query() query: LogsQueryDto): Promise<string> {
+    return this.server.logsText(query.tail);
   }
 
   @Get("allowlist")
@@ -100,8 +100,8 @@ export class ServerController {
   @Delete("allowlist/:name")
   @Roles("admin", "moderator")
   @ApiOperation({ summary: "Remove a player from the allowlist" })
-  async removeFromAllowlist(@Param("name") name: string): Promise<AllowListDto> {
-    return this.allowlist.removeEntry(name);
+  async removeFromAllowlist(@Param() params: AllowListNameParamDto): Promise<AllowListDto> {
+    return this.allowlist.removeEntry(params.name);
   }
 
   @Delete("allowlist")
