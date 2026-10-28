@@ -1,24 +1,27 @@
 import { stat } from "node:fs/promises";
 import type { DuplicatePolicy } from "@mc/shared";
-import { Inject, OnModuleInit } from "@nestjs/common";
+import { Inject, Injectable, type OnModuleDestroy, type OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Worker } from "bullmq";
 import { Redis as IORedis } from "ioredis";
 import { ImportJobService } from "./import-job.service.js";
 import { PackImportService } from "./pack-import.service.js";
 
-export class ImportWorkerService implements OnModuleInit {
+@Injectable()
+export class ImportWorkerService implements OnModuleInit, OnModuleDestroy {
   private worker?: Worker;
+  private connection?: IORedis;
 
   constructor(
     @Inject(ConfigService) config: ConfigService,
-    private readonly jobs: ImportJobService,
-    private readonly importer: PackImportService,
+    @Inject(ImportJobService) private readonly jobs: ImportJobService,
+    @Inject(PackImportService) private readonly importer: PackImportService,
   ) {
     if (config.get<string>("RUN_WORKER", "false").toLowerCase() !== "true") {
       return;
     }
     const redisUrl = config.get<string>("REDIS_URL", "redis://localhost:6379");
+    this.connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
     this.worker = new Worker(
       "pack-import",
       async (job) => {
@@ -50,7 +53,7 @@ export class ImportWorkerService implements OnModuleInit {
         await this.jobs.complete(data.jobId, report);
         return report;
       },
-      { connection: new IORedis(redisUrl, { maxRetriesPerRequest: null }) },
+      { connection: this.connection },
     );
     this.worker.on("failed", async (job, err) => {
       if (job?.data?.jobId) {
@@ -61,5 +64,13 @@ export class ImportWorkerService implements OnModuleInit {
 
   onModuleInit(): void {
     // worker starts automatically
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    try {
+      await this.worker?.close();
+    } finally {
+      this.connection?.disconnect();
+    }
   }
 }
