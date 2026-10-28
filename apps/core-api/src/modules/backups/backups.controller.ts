@@ -14,7 +14,7 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Roles } from "../../common/decorators/roles.decorator.js";
-import { ListPacksQueryDto } from "../packs/dto/list-packs.dto.js";
+import { PaginationQueryDto } from "../../common/dto/pagination-query.dto.js";
 import { BackupsService } from "./backups.service.js";
 import { CreateBackupDto, RestoreBackupDto } from "./dto/backup.dto.js";
 
@@ -25,7 +25,7 @@ export class BackupsController {
   constructor(@Inject(BackupsService) private readonly backups: BackupsService) {}
 
   @Get()
-  list(@Query() query: ListPacksQueryDto): Promise<Paginated<BackupDto>> {
+  list(@Query() query: PaginationQueryDto): Promise<Paginated<BackupDto>> {
     return this.backups.list(query);
   }
 

@@ -112,6 +112,10 @@ body {
   color: #9fd3a8;
 }
 
+.log-system {
+  color: #8ab4f8;
+}
+
 .server-controls {
   display: flex;
   gap: 8px;

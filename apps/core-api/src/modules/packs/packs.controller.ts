@@ -23,6 +23,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagg
 import { Public } from "../../common/decorators/public.decorator.js";
 import { Roles } from "../../common/decorators/roles.decorator.js";
 import { StorageService } from "../../common/storage/storage.service.js";
+import { DeletePacksQueryDto } from "./dto/delete-query.dto.js";
 import { BundleQueryDto, ImportQueryDto } from "./dto/import-bundle.dto.js";
 import { ListPacksQueryDto } from "./dto/list-packs.dto.js";
 import { PacksService } from "./packs.service.js";
@@ -151,9 +152,9 @@ export class PacksController {
   @Roles("admin", "moderator")
   async remove(
     @Param("id", ParseUUIDPipe) id: string,
-    @Query("force") force?: string,
+    @Query() query: DeletePacksQueryDto,
   ): Promise<{ deleted: true }> {
-    await this.packs.remove(id, force === "true");
+    await this.packs.remove(id, query.force === "true");
     return { deleted: true };
   }
 
@@ -161,16 +162,14 @@ export class PacksController {
   @Roles("admin", "moderator")
   async removeMany(
     @Body() body: { ids?: string[] },
-    @Query("type") type?: "resource" | "behavior",
-    @Query("all") all?: string,
-    @Query("force") force?: string,
+    @Query() query: DeletePacksQueryDto,
   ): Promise<{ deleted: number }> {
-    const opts = force === "true";
+    const opts = query.force === "true";
     if (body?.ids?.length) {
       return this.packs.removeMany(body.ids, opts);
     }
-    if (all === "true") {
-      return this.packs.removeAll(type, opts);
+    if (query.all === "true") {
+      return this.packs.removeAll(query.type, opts);
     }
     throw new BadRequestException(
       'Refusing to delete: pass "ids" in the body or explicitly set all=true',
