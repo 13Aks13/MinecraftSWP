@@ -227,8 +227,9 @@ services:
       # Bedrock 1.26.60+ only supports NetherNet; RakNet clients can no longer join.
       TRANSPORT: "nethernet"
       # NetherNet signals over TCP on server-port and carries gameplay over this
-      # UDP range. Keep it in sync with the published ports below.
-      SERVER_UDP_PORTS: "19140-19155:19140-19155"
+      # UDP range. <public_ip> is resolved by the itzg image at startup; clients
+      # must receive the public address, not the container's bridge address.
+      SERVER_UDP_PORTS: "<public_ip>:19140-19155:19140-19155"
       ALLOW_OUTBOUND_SCRIPT_MODULES: "true"
       UID: "1000"
       GID: "1000"
