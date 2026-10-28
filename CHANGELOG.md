@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/13Aks13/MinecraftSWP/compare/1.30.0...1.31.0) (2026-10-28)
+
+### Features
+
+- **api:** add stdin attach mode for console commands and validate command input ([8aa86e5](https://github.com/13Aks13/MinecraftSWP/commit/8aa86e528bef0f07a79fb134a546e7b781711504))
+- **api:** add stdin attach mode for console commands and validate command input ([0e6e48e](https://github.com/13Aks13/MinecraftSWP/commit/0e6e48ed28e62270a42de6ff9f5c52d40de0b4fd))
+
 # [1.30.0](https://github.com/13Aks13/MinecraftSWP/compare/1.29.0...1.30.0) (2026-10-28)
 
 ### Bug Fixes
