@@ -15,6 +15,7 @@ import { StorageService } from "../../common/storage/storage.service.js";
 import { dirSize, pathExists } from "../../common/utils/fs.utils.js";
 import { PackEntity } from "../packs/entities/pack.entity.js";
 import { ServerService } from "../server/server.service.js";
+import { SettingsService } from "../settings/settings.service.js";
 import type { CreateWorldDto, ListWorldsQueryDto, UpdateWorldPacksDto } from "./dto/world.dto.js";
 import { WorldEntity } from "./entities/world.entity.js";
 import { WorldPackEntity } from "./entities/world-pack.entity.js";
@@ -37,6 +38,7 @@ export class WorldsService {
     private readonly packs: Repository<PackEntity>,
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(ServerService) private readonly server: ServerService,
+    @Inject(SettingsService) private readonly settings: SettingsService,
   ) {}
 
   async list(query: ListWorldsQueryDto): Promise<Paginated<WorldDto>> {
@@ -165,6 +167,13 @@ export class WorldsService {
       await this.worlds.update({ status: "active" }, { status: "ready" as WorldStatus });
       world.status = "active";
       await this.worlds.save(world);
+
+      // The world's gameplay settings must be in server.properties before the
+      // server starts on the newly activated world.
+      await this.settings.update({
+        gamemode: world.gamemode,
+        difficulty: world.difficulty,
+      });
     } catch (error) {
       await rm(staging, { recursive: true, force: true }).catch(() => undefined);
       try {

@@ -8,5 +8,6 @@ import { SettingsService } from "./settings.service.js";
   imports: [ServerModule],
   controllers: [SettingsController],
   providers: [SettingsService, ServerPropertiesPipe],
+  exports: [SettingsService],
 })
 export class SettingsModule {}
