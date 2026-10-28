@@ -12,6 +12,7 @@ services:
     container_name: mc-traefik
     command:
       - --providers.docker=true
+      - --providers.docker.endpoint=tcp://docker-proxy-ro:2375
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=minecraft-proxy
       - --entrypoints.web.address=:80
@@ -28,10 +29,31 @@ services:
       - "${TRAEFIK_HTTP_PORT:-80}:80"
       - "${TRAEFIK_HTTPS_PORT:-443}:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
     networks:
       - proxy
+      - docker-api-ro
+    depends_on:
+      docker-proxy-ro:
+        condition: service_started
+    restart: unless-stopped
+    logging: *default-logging
+
+  docker-proxy-ro:
+    # Read-only discovery for Traefik. Pin a specific version or digest in production.
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: mc-docker-proxy-ro
+    environment:
+      # Traefik's docker provider only lists/inspects containers and networks and
+      # watches events (EVENTS, PING and VERSION are allowed by default).
+      CONTAINERS: 1
+      NETWORKS: 1
+      # POST stays 0: no start/stop/exec/create is possible through this instance.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-api-ro
+    mem_limit: 64m
     restart: unless-stopped
     logging: *default-logging
 
@@ -229,6 +251,10 @@ networks:
   docker-api:
     name: minecraft-docker-api
     # No outbound access; only core-api and docker-proxy are attached.
+    internal: true
+  docker-api-ro:
+    name: minecraft-docker-api-ro
+    # Only traefik and docker-proxy-ro are attached.
     internal: true
 
 volumes:
