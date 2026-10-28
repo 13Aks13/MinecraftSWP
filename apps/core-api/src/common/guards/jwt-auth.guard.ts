@@ -50,7 +50,8 @@ export class JwtAuthGuard implements CanActivate {
     // Re-read the user so deactivated accounts and role changes take effect
     // immediately instead of waiting for the token to expire.
     const user = await this.usersService.findById(payload.sub);
-    if (!user?.isActive) {
+    // A password change bumps tokenVersion, which revokes older tokens.
+    if (!user?.isActive || (payload.tv ?? 0) !== user.tokenVersion) {
       throw new UnauthorizedException("Invalid or expired token");
     }
 

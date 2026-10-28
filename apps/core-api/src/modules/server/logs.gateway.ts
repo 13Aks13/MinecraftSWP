@@ -49,7 +49,7 @@ export class LogsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const payload = await this.tokenService.verifyAccessToken(token);
       const user = await this.usersService.findById(payload.sub);
-      if (!user?.isActive) {
+      if (!user?.isActive || (payload.tv ?? 0) !== user.tokenVersion) {
         throw new Error("Inactive user");
       }
     } catch {

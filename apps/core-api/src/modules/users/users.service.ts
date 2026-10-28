@@ -76,6 +76,13 @@ export class UsersService implements OnModuleInit {
   }
 
   async setPassword(id: string, plain: string): Promise<void> {
-    await this.users.update({ id }, { passwordHash: await bcrypt.hash(plain, BCRYPT_ROUNDS) });
+    await this.users.update(
+      { id },
+      {
+        passwordHash: await bcrypt.hash(plain, BCRYPT_ROUNDS),
+        // Invalidates every token issued before this change.
+        tokenVersion: () => "token_version + 1",
+      },
+    );
   }
 }
