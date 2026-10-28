@@ -1,3 +1,17 @@
+# [1.35.0](https://github.com/13Aks13/MinecraftSWP/compare/1.34.0...1.35.0) (2026-10-28)
+
+### Bug Fixes
+
+- **api:** apply world settings before activating a world ([8f11a9b](https://github.com/13Aks13/MinecraftSWP/commit/8f11a9b32a045f7940e16421bf85eb66afa82f5c))
+- **api:** stop accepting websocket tokens from the URL query string ([c027841](https://github.com/13Aks13/MinecraftSWP/commit/c027841c4679caea9eef9c157162bde3c7bb775a))
+- **infra:** unroll NetherNet UDP mappings for BDS" ([c5b480d](https://github.com/13Aks13/MinecraftSWP/commit/c5b480d44c73976d0a36204235bc246313a0f337))
+
+
+### Features
+
+- **config:** ci: run tests against Postgres and Redis ([b7fff31](https://github.com/13Aks13/MinecraftSWP/commit/b7fff315eec2a0ffb6c690792969e813abb54bb3))
+- **config:** ci/cd gate merges and releases on tests ([5f99ab1](https://github.com/13Aks13/MinecraftSWP/commit/5f99ab1636e2e56c917d9c849804fa0eedc4eaaf))
+
 # [1.34.0](https://github.com/13Aks13/MinecraftSWP/compare/1.33.0...1.34.0) (2026-10-28)
 
 ### Features
